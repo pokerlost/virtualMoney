@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "virtualmoney.fullname" . }}
+  labels:
+    {{- include "virtualmoney.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "virtualmoney.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        pokerlost.io/logical-service-name: virtualMoney
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "virtualmoney.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: virtualmoney
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - api.application:create_app()
+            - --worker-class
+            - uvicorn_worker.UvicornWorker
+            - --bind
+            - 0.0.0.0:8000
+            - --workers
+            - {{ .Values.gunicorn.workers | quote }}
+            - --timeout
+            - {{ .Values.gunicorn.timeoutSeconds | quote }}
+            - --graceful-timeout
+            - {{ .Values.gunicorn.gracefulTimeoutSeconds | quote }}
+            - --keep-alive
+            - {{ .Values.gunicorn.keepAliveSeconds | quote }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "virtualmoney.fullname" . }}
+          env:
+            - name: VIRTUALMONEY_DATABASE__URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required
+                    "database.existingSecret is required"
+                    .Values.database.existingSecret
+                  }}
+                  key: {{ .Values.database.urlKey }}
+            {{- if .Values.logfire.existingSecret }}
+            - name: LOGFIRE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.logfire.existingSecret }}
+                  key: {{ .Values.logfire.tokenKey }}
+            {{- end }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: temporary-files
+              mountPath: /tmp
+      volumes:
+        - name: temporary-files
+          emptyDir: {}

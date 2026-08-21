@@ -1,1445 +1,345 @@
-# AGENTS.md
+# virtualMoney Repository Rules
 
-## Общие правила работы
+## Communication and repository language
 
-Всегда отвечай пользователю на русском языке.
+- Communicate with the repository user in Russian.
+- Keep repository-owned documentation, comments, docstrings, log messages, client-facing
+  messages, settings descriptions, and OpenAPI text in English.
+- Use concise PEP/reStructuredText-style docstrings. Do not use Google-style `Args:`, `Returns:`,
+  or `Raises:` sections, and do not add docstrings that only repeat a symbol name.
 
-Все объяснения, комментарии и сообщения пиши на русском.
-Код, имена переменных, названия библиотек, API, классов и технические термины оставляй на английском, если их обычно не переводят.
+## Scope and stack
 
-Перед изменением репозитория:
+- `virtualMoney` is the PostgreSQL-backed source of truth for internal poker assets, accounts,
+  immutable double-entry ledger entries, balances, holds, table escrow, BuyIn/ReBuy/CashOut,
+  rake, full compensation, and financial history.
+- Use Python 3.12 or newer, FastAPI, Pydantic v2, Pydantic Settings, SQLAlchemy 2.x async ORM,
+  asyncpg, PostgreSQL, Alembic, Typer, Logfire, Docker, Helm, and kind.
+- Redis, NoSQL, blockchain, crypto wallets, another ORM, raw-SQL architecture rewrites, message
+  brokers, Celery, and hidden infrastructure dependencies are prohibited.
+- Keep every change within the requested task. Do not perform unrelated refactoring, destructive
+  Git operations, or `git push` unless the user explicitly asks for it.
 
-1. Прочитай корневой `AGENTS.md`.
-2. Изучи существующую структуру проекта.
-3. Следуй repository-specific правилам поверх общих правил.
-4. Не выдумывай несуществующие пути, модули или архитектуру, если структура уже существует.
-5. Сохраняй изменения строго в рамках поставленной задачи.
+## Python conventions
 
-Не выполняй несвязанный рефакторинг.
+- Support Python 3.12 and newer. Ruff targets `py312`; mypy targets Python 3.12.
+- The maximum line length is 99. Ruff Formatter is the only formatter.
+- Use strict typing and modern syntax where it improves clarity. Avoid `Any`, broad `cast()`,
+  broad type ignores, and reflection for fields known at design time.
+- Do not use `setattr`, `getattr`, `vars`, `__dict__`, or reflection-based construction when fields
+  are known.
+- Use `__all__` primarily in package `__init__.py` facades. Leaf modules normally omit it; every
+  intentional `__all__` remains a tuple, including the single-item form.
+- Choose collections by meaning: `list` for ordered materialization, `set` for uniqueness,
+  `frozenset` for immutable uniqueness, and `tuple` only for fixed or immutable sequences or
+  library contracts.
+- Do not create large mutable structured globals or generic registry/helper frameworks.
 
-Не изменяй публичный API без прямой необходимости.
+## Source root and imports
 
-Не выдумывай:
-- результаты тестов;
-- coverage;
-- результаты benchmark;
-- поддержку платформ;
-- compatibility guarantees.
+- `app/` is the Python source root, not an import namespace.
+- Local commands use `PYTHONPATH=app`; containers use `PYTHONPATH=/service/app`.
+- Import `from api...`, `from application...`, `from configuration...`, `from domain...`,
+  `from observability...`, or `from persistence...`; never import `app.*`.
+- Every package directory below the `app/` source root contains `__init__.py`; `app/` itself is
+  not a package or import namespace.
+- Prefer FastAPI public imports over Starlette equivalents whenever FastAPI exposes the symbol.
+- Import the specific symbol used instead of a module namespace accessed for one attribute.
+- Relative imports may stay within the current package or address its sibling/child modules.
+  Parent-climbing `from ..` imports are forbidden; use an absolute architectural package import.
+- Imports crossing top-level architectural packages remain absolute.
+- A package facade exports only symbols with real external consumers. Application feature facades
+  export their public Commands, Queries, and Handlers; root architecture facades remain minimal.
+- Never mutate `sys.path` from project code.
 
-Не выполняй destructive Git-команды.
+## Architecture and application layer
 
-Не делай `git push`, если это явно не запросили.
-
-Перед завершением задачи просмотри итоговый diff.
-
-Сообщай:
-- какие команды были выполнены;
-- какие команды не удалось выполнить;
-- какие зависимости или инструменты отсутствовали;
-- какие допущения были сделаны;
-- какие проблемы остались.
-
----
-
-# Сервис
-
-Этот репозиторий содержит backend-сервис платформы онлайн-покера.
-
-Для `virtualMoney` сервис отвечает за внутренние игровые средства:
-
-- assets;
-- user accounts;
-- double-entry ledger;
-- balances;
-- holds;
-- buy-in;
-- rebuy;
-- cashout;
-- table escrow;
-- rake;
-- refunds;
-- историю финансовых операций.
-
-Сервис является источником истины по внутренним игровым деньгам.
-
-В сервисе запрещены:
-- blockchain;
-- crypto wallets;
-- private keys;
-- crypto addresses;
-- on-chain deposits;
-- on-chain withdrawals;
-- blockchain RPC;
-- mainnet/testnet logic.
-
-Все денежные значения хранятся только в целых минимальных единицах.
-
-`float` и `double` для денежных значений запрещены.
-
-Financial records после проведения не изменяются и не удаляются.
-Исправления выполняются через reversal/compensating operations.
-
-Все важные изменяющие состояние операции должны быть идемпотентными.
-
----
-
-# Основной стек
-
-Используй:
-
-- Python;
-- FastAPI;
-- Pydantic v2;
-- SQLAlchemy 2.x;
-- PostgreSQL;
-- Alembic.
-
-Дополнительные технологии добавляй только при конкретной необходимости.
-
-Не добавляй Kafka, RabbitMQ, NATS, Redis или другой infrastructure dependency без обоснованной необходимости.
-
----
-
-# Архитектурные слои
-
-Код должен быть разделён по логическим слоям.
-
-Предпочтительная структура:
+The dependency direction is:
 
 ```text
-src/
-    <service_package>/
-        domain/
-            entities/
-            value_objects/
-            enums/
-            services/
-            exceptions/
-
-        application/
-            commands/
-            queries/
-            use_cases/
-            dto/
-            ports/
-            services/
-
-        api/
-            routers/
-            schemas/
-                requests/
-                responses/
-            dependencies/
-            middleware/
-            errors/
-            security/
-            application.py
-
-        persistence/
-            models/
-            repositories/
-            mappings/
-            types/
-            enums/
-            unit_of_work/
-            migrations_support/
-
-        integrations/
-            clients/
-            adapters/
-            schemas/
-
-        workers/
-
-        configuration/
-            settings.py
-
-        observability/
-            logging.py
-            metrics.py
-
-        infrastructure/
+api -> application -> persistence -> domain
+configuration/observability -> composition root
 ```
 
-Это концептуальная структура.
-
-Не создавай пустые директории только ради соответствия схеме.
-
-Если существующий проект уже имеет разумную структуру, адаптируйся к ней вместо полного переписывания.
-
----
-
-# Направление зависимостей
-
-Предпочтительное направление:
-
-```text
-api
- |
- v
-application
- |
- v
-domain
-
-persistence -------> application/domain ports
-integrations ------> application ports
-configuration -----> composition root
-observability -----> infrastructure/composition
-```
-
-`domain` не должен зависеть от внешних frameworks.
-
-В `domain` запрещены imports из:
-
-- FastAPI;
-- Starlette;
-- SQLAlchemy;
-- Alembic;
-- HTTP clients;
-- PostgreSQL-specific libraries;
-- environment/configuration libraries.
-
----
-
-# FastAPI
-
-## Общий стиль
-
-Используй возможности FastAPI там, где они реально дают:
-
-- parsing;
-- validation;
-- dependency injection;
-- security;
-- OpenAPI documentation;
-- request metadata;
-- response contracts.
-
-Не выполняй ручной parsing HTTP-параметров, если FastAPI умеет сделать это корректно.
-
-Предпочитай `typing.Annotated`.
-
-Пример:
-
-```python
-user_id: Annotated[UUID, Path(...)]
-limit: Annotated[int, Query(ge=1, le=100)]
-idempotency_key: Annotated[str, Header(min_length=1, max_length=128)]
-```
-
-Используй по назначению:
-
-- `Path`;
-- `Query`;
-- `Header`;
-- `Cookie`;
-- `Body`;
-- `Form`;
-- `File`;
-- `Depends`;
-- FastAPI security dependencies.
-
----
-
-# Application factory
-
-FastAPI-приложение должно собираться через application factory.
-
-Предпочтительно:
-
-```python
-def create_app(settings: Settings | None = None) -> FastAPI:
-    ...
-    return app
-```
-
-Не выполняй всю конфигурацию приложения непосредственно на уровне module import.
-
-Application factory отвечает за orchestration:
-
-- создание `FastAPI`;
-- metadata;
-- routers;
-- middleware;
-- exception handlers;
-- lifespan;
-- OpenAPI configuration.
-
-Сам `create_app()` должен оставаться небольшим.
-
-Настройку выноси в отдельные функции:
-
-```python
-configure_middleware(app, settings)
-configure_exception_handlers(app)
-configure_routers(app)
-```
-
----
-
-# Routers
-
-Используй `APIRouter`.
-
-Разделяй routers по bounded API area или resource.
-
-Не складывай все endpoints в один файл.
-
-Route handler должен выполнять в основном:
-
-1. HTTP parsing;
-2. transport validation;
-3. dependency resolution;
-4. создание application command/query или передачу параметров use case;
-5. вызов application layer;
-6. mapping результата в API response.
-
-Route handler не должен содержать:
-
-- ledger calculations;
-- SQL;
-- transaction management;
-- balance mutation logic;
-- retry loops;
-- integration logic;
-- сложные state transitions.
-
----
-
-# FastAPI metadata и OpenAPI
-
-Для endpoint указывай при необходимости:
-
-- `response_model`;
-- `status_code`;
-- `summary`;
-- `description`;
-- `responses`;
-- `tags`;
-- `operation_id`.
-
-OpenAPI является частью публичного контракта сервиса.
-
-Не используй неописанные `dict` как основной публичный API-контракт.
-
----
-
-# Dependency Injection
-
-Используй FastAPI `Depends` только на transport/composition boundary.
-
-Предпочитай typed aliases:
-
-```python
-DatabaseSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
-CurrentPrincipalDep = Annotated[Principal, Depends(get_current_principal)]
-```
-
-DI подходит для:
-
-- authentication principal;
-- service identity;
-- permissions/scopes;
-- DB session;
-- unit of work;
-- application services;
-- configuration;
-- request metadata;
-- integration adapters.
-
-Не используй `Depends` внутри:
-
-- domain;
-- application use cases;
-- persistence repositories;
-- ORM models.
-
-Application/domain код должен быть вызываем без FastAPI.
-
-Запрещены service locator и скрытые global dependencies.
-
----
-
-# Pydantic v2
-
-## Базовая модель
-
-Создай одну настроенную базовую Pydantic-модель проекта.
-
-Например:
-
-```python
-from pydantic import BaseModel, ConfigDict
-
-
-class AppBaseModel(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-        str_strip_whitespace=True,
-        from_attributes=True,
-    )
-```
-
-Настройки адаптируй под реальную модель.
-
-Не включай опции автоматически, если они мешают конкретному contract.
-
-Используй Pydantic v2 API:
-
-- `model_validate`;
-- `model_dump`;
-- `field_validator`;
-- `model_validator`;
-- `ConfigDict`;
-- `computed_field`.
-
-Не используй deprecated Pydantic v1 style.
-
----
-
-# Разделение моделей
-
-Не смешивай следующие типы моделей:
-
-1. Domain entities/value objects.
-2. Application DTO/commands/queries.
-3. SQLAlchemy ORM models.
-4. Pydantic API request models.
-5. Pydantic API response models.
-6. Integration schemas.
-
-ORM model не является API schema.
-
-API schema не является domain entity.
-
-Не возвращай SQLAlchemy ORM objects напрямую наружу как публичный contract.
-
-Для ORM сущностей создавай соответствующие Pydantic response schemas там, где сущность попадает в API.
-
-Используй `from_attributes=True` для безопасного mapping ORM -> Pydantic только там, где это уместно.
-
-Не заставляй API зависеть от persistence-specific полей.
-
----
-
-# API schemas
-
-Размещай API-схемы отдельно от ORM.
-
-Например:
-
-```text
-api/
-    schemas/
-        requests/
-            accounts.py
-            ledger.py
-            holds.py
-        responses/
-            accounts.py
-            ledger.py
-            holds.py
-```
-
-Допустимо объединять request/response schema в одном domain-oriented модуле, если файлов становится слишком много и разделение не улучшает читаемость.
-
-Не создавай гигантский `schemas.py`.
-
----
-
-# Общий API response envelope
-
-Все обычные JSON endpoints должны использовать единый Generic response envelope, кроме осознанных protocol-specific исключений.
-
-Пример:
-
-```python
-from typing import Generic, TypeVar
-
-from pydantic import model_validator
-
-T = TypeVar("T")
-
-
-class ApiResponse(AppBaseModel, Generic[T]):
-    ok: bool
-    result: T | None = None
-    error: str | None = None
-    error_message: str | None = None
-    status_code: int
-
-    @model_validator(mode="after")
-    def validate_response_state(self) -> "ApiResponse[T]":
-        if self.ok:
-            if self.error is not None or self.error_message is not None:
-                raise ValueError("Successful response cannot contain error")
-        else:
-            if self.result is not None:
-                raise ValueError("Error response cannot contain result")
-            if not self.error or not self.error_message:
-                raise ValueError("Error response must contain error information")
-        return self
-```
-
-Successful response:
-
-```json
-{
-  "ok": true,
-  "result": {},
-  "error": null,
-  "error_message": null,
-  "status_code": 200
-}
-```
-
-Error response:
-
-```json
-{
-  "ok": false,
-  "result": null,
-  "error": "HTTP_404_NOT_FOUND",
-  "error_message": "Requested account was not found",
-  "status_code": 404
-}
-```
-
-`status_code` должен быть `int`.
-
-Фактический HTTP status и `status_code` внутри response body должны совпадать.
-
-Нельзя возвращать HTTP 200 при ошибке только потому, что error находится в JSON.
-
-Не собирай response dictionaries вручную в каждом router.
-
-Сделай централизованные success/error constructors или mappers, если это уменьшает дублирование.
-
----
-
-# Error handling
-
-Domain/application exceptions не должны зависеть от FastAPI.
-
-Не используй `HTTPException` внутри domain/application/persistence.
-
-Создавай typed exceptions для случаев вроде:
-
-- entity not found;
-- invalid state;
-- conflict;
-- insufficient funds;
-- duplicate/idempotency conflict;
-- permission violation;
-- infrastructure unavailable.
-
-На API boundary выполняй mapping application/domain errors -> HTTP responses.
-
-Используй централизованные FastAPI exception handlers.
-
-Unexpected errors:
-
-- логируются;
-- не раскрывают stack trace клиенту;
-- не раскрывают внутренние SQL/credentials/secrets;
-- возвращают безопасный generic error.
-
-Запрещено:
-
-```python
-except Exception:
-    pass
-```
-
----
-
-# HTTP status codes
-
-Используй:
-
-```python
-from fastapi import status
-```
-
-Вместо magic numbers предпочитай:
-
-```python
-status.HTTP_200_OK
-status.HTTP_201_CREATED
-status.HTTP_204_NO_CONTENT
-status.HTTP_400_BAD_REQUEST
-status.HTTP_401_UNAUTHORIZED
-status.HTTP_403_FORBIDDEN
-status.HTTP_404_NOT_FOUND
-status.HTTP_409_CONFLICT
-status.HTTP_422_UNPROCESSABLE_ENTITY
-status.HTTP_500_INTERNAL_SERVER_ERROR
-status.HTTP_503_SERVICE_UNAVAILABLE
-```
-
----
-
-# SQLAlchemy 2.x
-
-Используй современный SQLAlchemy 2.x declarative style.
-
-Legacy querying и legacy model declaration запрещены.
-
----
-
-# SQLAlchemy Declarative Base
-
-Создай собственную declarative base.
-
-Пример:
-
-```python
-from sqlalchemy.orm import DeclarativeBase
-
-
-class Base(DeclarativeBase):
-    pass
-```
-
-Если необходимо определить общие ORM conventions, делай это централизованно.
-
-Не смешивай declarative base с API/Pydantic base model.
-
----
-
-# SQLAlchemy strict typing
-
-ORM models должны быть полностью типизированы.
-
-Используй:
-
-- `Mapped[T]`;
-- `mapped_column()`;
-- `relationship()`;
-- typed collections;
-- Python enums;
-- UUID/ULID wrapper types, если они действительно используются проектом.
-
-Пример:
-
-```python
-from sqlalchemy import BigInteger, String
-from sqlalchemy.orm import Mapped, mapped_column
-
-
-class AccountModel(Base):
-    __tablename__ = "accounts"
-
-    id: Mapped[UUID] = mapped_column(primary_key=True)
-    balance_minor: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    name: Mapped[str] = mapped_column(String(128), nullable=False)
-```
-
-Не используй старый стиль:
-
-```python
-id = Column(...)
-```
-
-если проект не содержит legacy-код, который пока невозможно безопасно мигрировать.
-
----
-
-# Собственные ORM типы
-
-Persistence-specific типы должны находиться отдельно.
-
-Предпочтительно:
-
-```text
-persistence/
-    types/
-        uuid.py
-        money.py
-        timestamps.py
-```
-
-или более компактная структура, если типов мало.
-
-Создавай собственные SQLAlchemy types только если они обеспечивают реальную гарантию или единый mapping.
-
-Примеры возможных задач:
-
-- UUID/ULID representation;
-- constrained monetary integer;
-- domain enum mapping;
-- JSON value object mapping.
-
-Не создавай custom `TypeDecorator`, если стандартного SQLAlchemy/PostgreSQL type достаточно.
-
-Если используется `TypeDecorator`:
-
-- он должен быть typed;
-- иметь `cache_ok = True`, когда это корректно;
-- явно реализовывать conversion;
-- не содержать business logic;
-- не скрывать неочевидные side effects.
-
----
-
-# Money types
-
-Деньги в БД хранятся целым числом минимальных единиц.
-
-Предпочтительно PostgreSQL `BIGINT`.
-
-Использовать для money запрещено:
-
-- `Float`;
-- `REAL`;
-- `DOUBLE PRECISION`;
-- Python `float`.
-
-Если создаётся Python alias/value object для monetary amount, он должен гарантировать integer semantics.
-
-Например, допустимо иметь отдельный domain `Money`/`Amount` value object и persistence mapping для него.
-
----
-
-# ORM enums
-
-Closed state sets должны быть типизированы.
-
-Python enum размещай в appropriate domain/persistence module в зависимости от ownership.
-
-Не размазывай строковые состояния:
-
-```python
-status = "pending"
-```
-
-по всему проекту.
-
-Используй enum.
-
-При использовании PostgreSQL native ENUM заранее продумывай Alembic migration strategy.
-
-Не изменяй enum values в production schema без migration.
-
-Если native PostgreSQL enum усложняет evolution без ощутимой пользы, допустим String/VARCHAR storage + typed Python enum + DB constraint.
-
-Выбор должен быть осознанным.
-
----
-
-# ORM model structure
-
-ORM models разделяй по bounded persistence area.
-
-Например:
-
-```text
-persistence/
-    models/
-        account.py
-        asset.py
-        ledger.py
-        hold.py
-        table_escrow.py
-        outbox.py
-```
-
-Не создавай один огромный `models.py`.
-
-Если моделей мало, допустимо более компактное разделение.
-
-ORM model содержит:
-
-- DB columns;
-- relationships;
-- persistence constraints;
-- indexes;
-- simple persistence-oriented representation.
-
-ORM model не должен содержать сложную business logic.
-
----
-
-# ORM mixins
-
-Допустимы небольшие typed mixins для действительно общих persistence concerns.
-
-Например:
-
-```text
-persistence/
-    models/
-        mixins/
-            timestamps.py
-            identifiers.py
-```
-
-Не создавай mixin architecture ради пары повторяющихся строк.
-
-Не добавляй generic repository/base service только ради устранения небольшого дублирования.
-
----
-
-# Constraints и indexes
-
-Критические invariants, которые можно дополнительно защитить на уровне БД, должны иметь DB constraints.
-
-Используй при необходимости:
-
-- `CheckConstraint`;
-- `UniqueConstraint`;
-- `ForeignKeyConstraint`;
-- indexes;
-- partial indexes PostgreSQL.
-
-Но DB constraints являются дополнительной защитой, а не заменой domain/application validation.
-
-Для idempotency identifiers, external operation identifiers и уникальных financial events создавай соответствующие unique constraints.
-
----
-
-# Relationships
-
-SQLAlchemy relationships должны быть typed.
-
-Пример:
-
-```python
-entries: Mapped[list["LedgerEntryModel"]] = relationship(
-    back_populates="transaction",
-)
-```
-
-Не используй relationships как скрытый механизм выполнения бизнес-операций.
-
-Избегай неявного mass loading.
-
-Loader strategy выбирай осознанно.
-
-Не полагайся на lazy loading в API serialization.
-
-Не допускай N+1 queries в ожидаемых hot paths.
-
----
-
-# ORM и Pydantic
-
-Для API создавай отдельные Pydantic schemas.
-
-Пример:
-
-```python
-class AccountResponse(AppBaseModel):
-    id: UUID
-    asset_code: str
-    available_balance: int
-    held_balance: int
-```
-
-ORM:
-
-```python
-class AccountModel(Base):
-    ...
-```
-
-Domain:
-
-```python
-@dataclass(frozen=True)
-class Account:
-    ...
-```
-
-Это разные ответственности.
-
-Нельзя использовать один универсальный класс одновременно как:
-
-- SQLAlchemy entity;
-- Pydantic request;
-- Pydantic response;
-- domain entity.
-
----
-
-# Persistence mappings
-
-Mapping между ORM и domain/application representations должен быть явным.
-
-Для mapping выделяй modules, если mapping становится нетривиальным:
-
-```text
-persistence/
-    mappings/
-        account.py
-        ledger.py
-```
-
-Примеры:
-
-```python
-def account_model_to_domain(model: AccountModel) -> Account:
-    ...
-```
-
-```python
-def ledger_entry_to_model(entity: LedgerEntry) -> LedgerEntryModel:
-    ...
-```
-
-Не создавай сложный universal automapper.
-
-Явный mapping предпочтительнее скрытой reflection magic.
-
----
-
-# Repositories
-
-Repository interfaces/ports размещай в `application/ports` или другом внутреннем слое.
-
-SQLAlchemy implementations размещай в persistence layer.
-
-Например:
-
-```text
-application/
-    ports/
-        account_repository.py
-
-persistence/
-    repositories/
-        sqlalchemy_account_repository.py
-```
-
-Repository не должен:
-
-- commit transaction самостоятельно без архитектурной причины;
-- возвращать FastAPI response;
-- выбрасывать `HTTPException`;
-- содержать HTTP logic.
-
-Repository отвечает за persistence operations.
-
-Business decisions остаются в domain/application.
-
----
-
-# Unit of Work
-
-Для financial commands transaction boundary должен быть явным.
-
-Предпочтительно использовать Unit of Work или эквивалентный application-level transaction boundary.
-
-Пример концепции:
-
-```python
-async with uow:
-    ...
-    await uow.commit()
-```
-
-Не вызывай `commit()` внутри случайных low-level repository methods.
-
-Одна логическая финансовая операция должна либо завершиться целиком, либо откатиться целиком.
-
-Пример:
-
-```text
-BEGIN
-
-idempotency check
-domain validation
-ledger transaction
-ledger entries
-hold/escrow state
-outbox event
-
-COMMIT
-```
-
----
-
-# Async SQLAlchemy
-
-Если сервис использует async FastAPI stack, используй:
-
-- `AsyncEngine`;
-- `async_sessionmaker`;
-- `AsyncSession`;
-- SQLAlchemy async API.
-
-Не смешивай sync и async DB access без явной причины.
-
-Не делай blocking DB operations в async route handlers.
-
-Session lifecycle должен быть deterministic.
-
----
-
-# SQLAlchemy session
-
-Не создавай global `AsyncSession`.
-
-Не переиспользуй одну session между concurrent requests.
-
-Обычно session должна жить в рамках request/application operation/UoW.
-
-Session dependency может создаваться через FastAPI DI на API boundary.
-
-Rollback errors нельзя молча игнорировать.
-
----
-
-# Query style
-
-Используй SQLAlchemy 2.x statements:
-
-```python
-stmt = select(AccountModel).where(AccountModel.id == account_id)
-result = await session.execute(stmt)
-```
-
-Не используй legacy:
-
-```python
-session.query(...)
-```
-
-Используй осмысленные методы результата:
-
-- `scalar_one()`;
-- `scalar_one_or_none()`;
-- `scalars()`;
-- `one()`;
-- `one_or_none()`.
-
-Не используй `.first()` автоматически там, где uniqueness является invariant.
-
----
-
-# Loading strategy
-
-Выбирай loading strategy явно.
-
-Используй по необходимости:
-
-- `selectinload`;
-- `joinedload`;
-- explicit joins.
-
-Не допускай неявной сериализации ORM graph с неожиданными дополнительными запросами.
-
-Особенно не рассчитывай на lazy loading после закрытия session.
-
----
-
-# Transactions и locking
-
-Financial code должен учитывать concurrency.
-
-Для операций, где возможна race condition, рассматривай:
-
-- row-level locks;
-- `SELECT ... FOR UPDATE`;
-- unique constraints;
-- optimistic versioning;
-- atomic SQL updates.
-
-Не используй locking автоматически везде.
-
-Выбирай механизм согласно конкретному invariant.
-
-Нельзя проверять баланс одним запросом, затем без защиты изменять его другим запросом, если параллельная операция может нарушить invariant.
-
----
-
-# Ledger
-
-Ledger должен быть immutable double-entry.
-
-Каждая financial transaction должна иметь минимум две противоположные entries.
-
-Сумма entries по одной asset должна быть равна нулю.
-
-Ledger transaction и entries должны сохраняться атомарно.
-
-Проведённая ledger transaction не редактируется.
-
-Для correction создаётся reversal/compensating transaction.
-
-Не изменяй authoritative balance скрытым SQL `UPDATE`, обходящим ledger.
-
-Если balances materialized/cached для производительности, ledger остаётся authoritative financial history, а обновление materialized balance выполняется в той же transaction boundary.
-
----
-
-# Holds
-
-Holds должны моделироваться отдельной сущностью/состоянием.
-
-Не реализуй hold простым уменьшением balance без истории.
-
-Минимально продумай состояния вроде:
-
-- active;
-- released;
-- captured;
-- expired/cancelled, если это требуется business rules.
-
-Повторная release/capture не должна повторно изменять средства.
-
----
-
-# Table escrow
-
-Table escrow должен быть отдельным account/ledger concept.
-
-Buy-in переводит средства из пользовательского доступного account в table escrow.
-
-Cashout переводит средства из table escrow обратно на user account.
-
-Rake должен отражаться отдельной ledger operation и системным rake account.
-
-Не храни table money только в Poker Server memory.
-
----
-
-# Idempotency
-
-Все важные state-changing operations получают стабильный identifier:
-
-- `operation_id`;
-- `idempotency_key`;
-- `command_id`.
-
-При сетевом retry используется тот же identifier.
-
-Повтор не должен повторно:
-
-- списывать средства;
-- зачислять средства;
-- создавать hold;
-- захватывать hold;
-- делать buy-in;
-- делать rebuy;
-- делать cashout;
-- начислять rake;
-- делать refund.
-
-Idempotency record и financial mutation должны находиться в согласованной transaction boundary.
-
----
-
-# Transactional outbox
-
-Если операция создаёт исходящее событие, изменение состояния и outbox record должны сохраняться атомарно:
-
-```text
-BEGIN
-
-state mutation
-ledger mutation
-outbox record
-
-COMMIT
-```
-
-Для первой версии PostgreSQL outbox допустим и предпочтителен перед добавлением message broker без необходимости.
-
----
-
-# Alembic
-
-Все schema changes выполняй через Alembic migrations.
-
-Не изменяй production schema вручную.
-
-Migration должна:
-
-- быть детерминированной;
-- иметь понятные upgrade/downgrade, если downgrade безопасен;
-- создавать indexes/constraints явно;
-- корректно обрабатывать PostgreSQL-specific types;
-- не уничтожать данные без прямого требования.
-
-Не полагайся слепо на Alembic autogenerate.
-
-После autogenerate всегда проверяй migration вручную.
-
-При изменении enum/type учитывай отдельный migration lifecycle.
-
----
-
-# Naming conventions
-
-Используй единообразные DB names.
-
-Предпочтительно настроить SQLAlchemy metadata naming convention для:
-
-- primary keys;
-- foreign keys;
-- unique constraints;
-- check constraints;
-- indexes.
-
-Например:
-
-```python
-NAMING_CONVENTION = {
-    "ix": "ix_%(column_0_label)s",
-    "uq": "uq_%(table_name)s_%(column_0_name)s",
-    "ck": "ck_%(table_name)s_%(constraint_name)s",
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    "pk": "pk_%(table_name)s",
-}
-```
-
-Конкретную convention адаптируй под проект.
-
-Это помогает Alembic создавать стабильные migrations.
-
----
-
-# Configuration
-
-Configuration должна быть централизована и validated.
-
-Предпочтительно использовать `pydantic-settings`.
-
-Не читай `os.environ` в arbitrary modules.
-
-Settings загружаются в configuration/composition boundary.
-
-Invalid required configuration должна приводить к fail-fast startup.
-
-Secrets запрещено:
-
-- хранить в Git;
-- логировать;
-- возвращать через API.
-
----
-
-# Lifespan
-
-Используй FastAPI lifespan вместо deprecated startup/shutdown events.
-
-Lifespan подходит для lifecycle:
-
-- DB engine;
-- HTTP pools;
-- infrastructure clients.
-
-Не запускай unmanaged endless loops внутри lifespan.
-
-Persistent background workers должны иметь отдельный явный lifecycle.
-
----
-
-# Middleware
-
-Middleware предназначен для cross-cutting transport concerns:
-
-- request ID;
-- correlation ID;
-- logging context;
-- timing/metrics;
-- security headers.
-
-Middleware не должен содержать:
-
-- authorization business rules;
-- ledger operations;
-- balance mutation;
-- DB-heavy logic без необходимости.
-
----
-
-# Observability
-
-Production-код должен поддерживать:
-
-- structured JSON logging;
-- `request_id`;
-- `correlation_id`;
-- `operation_id`;
-- health endpoint;
-- readiness endpoint;
-- metrics-ready instrumentation.
-
-Не логируй secrets.
-
-Financial operation должна быть traceable по `operation_id`.
-
----
-
-# Security
-
-Следуй least privilege.
-
-Сервис должен самостоятельно валидировать входящие данные и caller permissions.
-
-Не доверяй client-provided значениям для:
-
-- authoritative balances;
-- rake calculations;
-- account ownership;
-- table balances;
-- calculated fees.
-
-Admin/internal operations должны иметь отдельные scopes/permissions.
-
-Sensitive operations должны быть пригодны для rate limiting.
-
----
-
-# Кодстайл
-
-Код должен быть production-grade.
-
-Предпочитай:
-
-- explicit typing;
-- ясные имена;
-- небольшие focused modules;
-- enums для закрытых состояний;
-- immutable value objects, где это полезно;
-- explicit dependencies;
-- explicit transaction boundaries.
-
-Избегай:
-
-- `Any` без необходимости;
-- magic strings;
-- magic numbers;
-- circular imports;
-- import-time side effects;
-- global mutable state;
-- giant `utils.py`;
-- giant `models.py`;
-- giant `schemas.py`;
-- giant `services.py`;
-- скрытых DB writes;
-- чрезмерного inheritance;
-- generic abstractions без реальной пользы.
-
-Не создавай абстракцию только ради "clean architecture".
-
----
-
-# Запрещённые production-паттерны
-
-Не допускаются:
-
-- production state только в memory;
-- global mutable singletons;
-- `except Exception: pass`;
-- silent error swallowing;
-- hardcoded secrets;
-- unvalidated env variables;
-- скрытое изменение balance;
-- прямое изменение таблиц другого сервиса;
-- TODO вместо обязательного функционала завершённого этапа;
-- фиктивная business logic;
-- неограниченные retry;
-- endless unmanaged background loops.
-
----
-
-# Автотесты и CI/CD
-
-Автотесты и CI/CD в рамках задач этого репозитория не реализовывать, если пользователь прямо не запросил обратное.
-
-Запрещено добавлять или изменять:
-
-- unit tests;
-- integration tests;
-- end-to-end tests;
-- fixtures;
-- coverage tooling;
-- GitHub Actions;
-- GitLab CI;
-- Jenkins;
-- CI pipeline;
-- automatic deployment;
-- CI runners.
-
-Другой разработчик отвечает за tests и CI/CD.
-
-Архитектура при этом должна оставаться testable:
-
-- dependencies передаются явно;
-- infrastructure находится за adapters/ports;
-- system time можно подменить там, где он влияет на business behavior;
-- business logic deterministic, где это возможно;
-- application/domain код не требует FastAPI для запуска.
-
----
-
-# Ручная проверка
-
-Для проверки задач разрешены:
-
-- запуск приложения;
-- formatter;
-- linter;
-- type checker, если уже настроен;
-- сборка;
-- Alembic migration;
-- `curl`;
-- smoke-check;
-- проверка записей в локальной PostgreSQL;
-- существующий Docker Compose.
-
-Не добавляй tests в acceptance criteria.
-
----
-
-# Работа с изменениями
-
-При выполнении конкретной задачи:
-
-1. Сначала изучи текущую реализацию.
-2. Определи минимально необходимую область изменений.
-3. Не переписывай несвязанные модули.
-4. Не меняй public contracts без необходимости.
-5. Не добавляй новые dependencies без обоснования.
-6. Не добавляй tests/CI.
-7. Не оставляй основной функционал в TODO.
-8. После реализации просмотри diff.
-9. Выполни доступные ручные проверки.
-10. В финальном отчёте укажи:
-   - что сделано;
-   - список изменённых файлов;
-   - migrations;
-   - новые/изменённые API contracts;
-   - выполненные команды;
-   - невыполненные команды и причины;
-   - допущения;
-   - риски;
-   - незавершённые проблемы.
-
-Если требования задачи конфликтуют с этим `AGENTS.md`, явно сообщи о конфликте и следуй более конкретному/новому прямому требованию пользователя.
-
----
-
-# Обязательные conventions каркаса virtualMoney
-
-- Python modules, variables, functions, parameters, Pydantic fields и SQLAlchemy attributes всегда
-  используют `snake_case`.
-- Публичная JSON serialization использует `camelCase`. Входная Pydantic validation принимает
-  canonical `snake_case`, публичный `camelCase` и `PascalCase` через централизованную alias policy.
-- Все API contracts наследуются от общей Pydantic v2 base model. ORM-facing Pydantic schemas,
-  SQLAlchemy models и domain models остаются отдельными типами и не смешивают inheritance.
-- SQLAlchemy mappings используют только typed стиль 2.x: `Mapped[T]`, `mapped_column`, typed
-  `relationship` и SQLAlchemy 2.x statements. Legacy `Column` declarations и `session.query()`
-  запрещены.
-- Каждый публичный endpoint обязан явно задавать `summary`, `description`, `operation_id`,
-  `response_model` и `status_code`; дополнительные исходы документируются через `responses`.
-- Каждый публичный `Path`, `Query`, `Header`, `Cookie`, `Body`, `Form` и `File` parameter обязан
-  иметь понятные `title`/`description`, ограничения и формат, когда FastAPI это поддерживает.
-- Public/reusable functions и classes, dependency providers, application factory, non-obvious
-  infrastructure и сложные invariants документируются содержательными docstrings.
-- Tests, fixtures, coverage и CI/CD нельзя добавлять или изменять без прямого запроса пользователя.
+- Organize `application/` by business feature, not by global command/DTO/query/use-case buckets.
+- Keep application input/output models inside the feature that owns them.
+- Keep services only when behavior is genuinely reused by multiple use cases. Do not create a
+  giant financial service or one-method wrapper packages.
+- Domain code owns enums, meaningful constants, reusable semantic Pydantic types, and validated
+  value models that are shared across transport and application boundaries.
+- SQLAlchemy ORM models are the persisted internal entity representation; do not recreate matching domain entities.
+- Do not create service locators, generic repository containers, or duplicate architectural
+  styles.
+
+## HTTP API
+
+- Use `POST` for every parameterized business command or query. Use `GET` only for handlers that
+  require no request parameters or body.
+- Do not use `PUT`, `PATCH`, or `DELETE`.
+- Do not use project-owned business `Header` or `Path` parameters. Business identifiers and
+  operation IDs belong in one explicit Pydantic request body.
+- Use `Query` only as a documented, deliberate exception when it is clearly the best HTTP form.
+- Multi-word paths use camelCase; Python identifiers remain snake_case.
+- Every route decorator puts `path=` first and declares a concrete `response_model`,
+  `status_code`, English `summary`, English `description`, stable `operation_id`, `responses`, and
+  a logical tag.
+- Use exactly one envelope: `ApplicationResponse[T]` with `ok`, `result`, `error`, and
+  `error_message`. Do not put an HTTP status in the JSON body.
+- Ordinary handlers return raw dictionaries such as `{"ok": True, "result": result}`. Do not add
+  success/error response factories or use `JSONResponse` in ordinary handlers.
+- Do not call `.model_validate()` or `.model_dump()` in a handler solely for output serialization.
+  Return the typed result inside the raw envelope and let the declared response model serialize it.
+
+## Router architecture and dependency injection
+
+- One router package represents one logical API area.
+- Its `router.py` owns the tag and includes action subrouters such as `create.py`,
+  `get.py`, or `release.py`.
+- Base routers import each child `router` symbol explicitly with a descriptive `_router` alias;
+  they do not import whole action modules solely to access `.router`.
+- Keep feature-local use-case providers in that router package's `dependencies.py`.
+- Do not centralize every repository/use-case dependency in a giant global module and do not
+  create one-use named dependency aliases.
+- One central database-session dependency is expected. All repositories for one request receive
+  that same session.
+- Routers depend on use cases, never on `AsyncSession`, SQLAlchemy statements, or persistence
+  decisions.
+
+## Pydantic models and public schemas
+
+- Keep HTTP request models under `api/schemas/requests/`, direct entity output schemas under
+  `api/schemas/orm/`, and calculated/composite results under `api/schemas/responses/`.
+- Request models use camelCase aliases, forbid unknown input, and own transport documentation.
+- ORM schemas inherit `from_attributes=True` from their shared base.
+- Keep HTTP Request, ORM Schema, and custom Response models separate. Application Commands,
+  Queries, structured results, pagination values, and domain value objects are immutable Pydantic
+  v2 models without transport aliases.
+- Use one small immutable internal Pydantic base for application/domain value models and one small
+  immutable persistence projection base. Do not create several equivalent bases.
+- SQLAlchemy mapped entities remain SQLAlchemy classes. Runtime resources and service objects are
+  normal explicit classes; do not make either category Pydantic merely for convenience.
+- Avoid dataclass validation boilerplate and manual `__post_init__` validation. Put reusable
+  primitive validation in semantic Pydantic types and keep database-state rules in handlers or
+  services.
+- Prefer one public request, response, ORM schema, application model, semantic type, or enum per
+  file. Use `__init__.py` only for intentional re-exports.
+- Reuse semantic validated types such as `NonNilUUID`, `OperationId`, and money-minor types rather
+  than repeating validators across models.
+- Keep keyset pagination input, cursor, policy, and response shapes centralized.
+
+## Database transactions
+
+- One HTTP request owns one PostgreSQL transaction through `async_sessionmaker.begin()`.
+- The FastAPI yield dependency uses `Depends(..., scope="function")`, so commit or rollback
+  completes before the response is sent.
+- Do not manually call `commit()` or `rollback()` in use cases or repositories.
+- Do not reintroduce a Unit of Work transaction wrapper or a repository mega-container.
+- Internal posting, capture, projection, and reversal services use repositories sharing the
+  request session. They never open or finish transactions.
+- Keep `expire_on_commit=False` when response scalar access after dependency cleanup requires it.
+- Returned ORM objects must not require lazy I/O during response serialization; eager-load or use
+  typed projections when relationships are needed.
+- Do not maintain hardcoded SQLSTATE classifications or parse database exception text.
+
+## Errors
+
+- Application errors inherit a small transport-independent semantic category: not found,
+  conflict, invalid operation, or integrity.
+- Split application and domain errors by feature; do not recreate giant exception modules.
+- Split API exception handling by category: application, database, validation, and unexpected.
+- Map SQLAlchemy exception classes centrally. Never expose SQL, DSNs, driver messages,
+  constraint names, or internal exception strings to clients.
+- Let exceptions leave the database dependency so SQLAlchemy owns rollback.
+
+## Enums
+
+- Keep one domain enum per file under `domain/enums/` and intentionally re-export active enums
+  from `domain/enums/__init__.py`.
+- Do not recreate a monolithic `domain/enums.py`.
+- Do not put free enum-to-enum normalization helpers in persistence. Preserve native source enums
+  in source-discriminated projections or make a genuine mapping structural to its owning model.
+- Platform-owned ledger reference namespaces use `LedgerReferenceType`; internal business logic
+  has no magic reference strings. Validated custom low-level ADJUSTMENT namespaces remain open.
+
+## Repositories and persistence
+
+- Application handlers and services use constructor-injected concrete entity repositories from
+  `persistence/repositories/` and read adapters from `persistence/queries/`. Ceremonial repository
+  Protocols are forbidden.
+- SQLAlchemy adapters receive an `AsyncSession`, use typed SQLAlchemy 2.x ORM and `select()`, and
+  never import FastAPI, open transactions, commit, rollback, or make business decisions.
+- `persistence/repositories/` contains only entity or aggregate persistence adapters. Entity reads
+  return ORM models, optional ORM models, or lists of ORM models; repositories never return
+  Pydantic projections, API schemas, raw dictionaries, `RowMapping`, or dict-indexed entities.
+- Repository collection reads return deterministic lists and use `[]` for an empty collection.
+  Application code may index those ORM rows when business validation needs keyed lookup.
+- Complex joins, aggregation, history, and other SQL read projections belong to focused adapters
+  under `persistence/queries/`. Query adapters return immutable typed Pydantic projections, never
+  raw dictionaries, `RowMapping`, tuples, or ORM entity dictionaries.
+- Every entity repository inherits `SQLAlchemyRepository`; repositories for standard `UUIDModel`
+  entities inherit `SQLAlchemyEntityRepository[ModelT]` and share its typed `get_by_id()`.
+  Non-standard-key entities such as `AccountBalanceModel` inherit the general base.
+- Keep the repository bases small: they own only the request session, typed scalar/projection
+  execution, and standard UUID lookup. Generic CRUD, filters, sorting, mutations, and business
+  errors do not belong in the bases.
+- `SQLAlchemyScalarResultReader[ResultT]` owns all scalar extraction and exposes only `one()`,
+  `one_or_none()`, and `all()`; `all()` returns `list[ResultT]`.
+- `SQLAlchemyProjectionResultReader[ProjectionT]` owns all labeled mapping-row extraction, uses
+  Pydantic `TypeAdapter`, and exposes only `one()`, `one_or_none()`, and `all()`.
+- Concrete repositories and query adapters never call SQLAlchemy `scalar*()`, `scalars()`,
+  `mappings()`, or `tuples()` extraction APIs directly.
+- Preserve deterministic lock ordering, row locks, PostgreSQL `ON CONFLICT`, and database
+  constraints selected for actual financial races.
+- Repository writes use explicit DML plus `RETURNING` through the result readers. Do not use
+  `AsyncSession.add()`, `add_all()`, `flush()`, or `refresh()` in normal write paths.
+- A write returns the ORM row or scalar from that same statement, a natural affected value, or
+  `None` for no row. It does not hide a read-after-write; conflict recovery reads stay explicit in
+  application orchestration.
+- Dictionaries required by FastAPI or OpenAPI metadata are valid at the API composition boundary;
+  the prohibition on dictionary results applies to public persistence contracts.
+- Schema changes use new deterministic Alembic revisions. Never rewrite old revisions or run
+  migrations during application startup.
+
+## SQLAlchemy ORM
+
+- SQLAlchemy infrastructure lives under `persistence/database`; Base, meaningful mixins, and each
+  ORM model have focused modules and relative package facades.
+- Ordinary UUID entities inherit `UUIDModel`. Use `CreatedAtMixin`, `TimestampMixin`, and
+  `OperationIdentityMixin` only where their full repeated persistence structure applies.
+- ORM models own mappings, relationships, and database constraints but no Active Record access.
+- Add typed relationships where they clarify the used object graph. Relationships use an explicit
+  no-hidden-I/O policy such as `lazy="raise"`; use explicit `foreign_keys` for multiple links to
+  the same table and eager-load relationships required after request cleanup.
+- Keep database financial constraints even when Pydantic validates input first. Metadata-only
+  refactors need no migration; real schema changes require a new deterministic revision.
+- Database-generated UUIDs plus logical uniqueness express service-provisioned TABLE_ESCROW and
+  RAKE identity. Do not use deterministic UUID namespaces or fabricated system owner UUIDs; SYSTEM
+  accounts have `owner_id = NULL`, while USER and TABLE ownership remains non-null.
+
+## Financial invariants
+
+- Money is Python `int` and PostgreSQL `BIGINT` in minimal units. Floating-point money is
+  prohibited.
+- The ledger is immutable double-entry. Every posted transaction has at least two non-zero,
+  same-asset entries whose sum is zero.
+- Corrections create full reversal transactions; posted transactions and entries are never edited
+  or deleted.
+- Posted and held balance projections change atomically with their authoritative ledger or hold
+  audit. Available balance is derived as posted minus held.
+- Holds are full-only `ACTIVE`, `RELEASED`, or `CAPTURED`. Capture posts exactly one immutable
+  `HOLD_CAPTURE` transfer.
+- Table escrow is a dedicated pooled `TABLE_ESCROW` account. BuyIn/ReBuy capture holds; CashOut
+  returns the authoritative final stack and closes the durable position.
+- Each asset has at most one system-owned `RAKE` account. Rake moves funds from table escrow to
+  that account after all state, funds, asset, BIGINT, and idempotency checks.
+- Full compensation appends a `REVERSAL` and immutable refund audit without rewriting prior
+  lifecycle history.
+- Every state-changing operation has a stable `operation_id`. Exact semantic replay is harmless;
+  reuse with another payload is an idempotency conflict.
+- Financial history uses bounded descending keyset pagination with an opaque timestamp-and-UUID
+  cursor, never unbounded results or OFFSET as the production model.
+- The repeated descending timestamp-and-UUID SQL predicate lives in one focused persistence
+  helper; each query adapter still owns its columns, ordering, and limit.
+
+## Authentication boundary
+
+- `virtualMoney` contains no authentication or authorization implementation.
+- Do not add JWT/Bearer parsing, API keys, token scopes, auth middleware, local principals,
+  hardcoded credentials, development tokens, or fake administrators.
+- A future external Auth Service owns token issuance and permissions. Until its contract exists,
+  document the boundary only; do not add dead ports, adapters, or models.
+- Current internal endpoints are unauthenticated and must not claim to provide access security.
+
+## Observability
+
+- Use Pydantic Logfire as the single observability implementation.
+- Configure Logfire once and instrument FastAPI and the concrete SQLAlchemy engine once at the
+  composition boundary.
+- Keep telemetry privacy-safe: do not capture request bodies, endpoint arguments, credentials,
+  tokens, DSNs, or raw financial payloads.
+- Use safe identifiers and structured spans/events for financial diagnostics. Do not recreate a
+  custom JSON logger, ContextVar framework, or OpenTelemetry propagation layer.
+- `LogfireSettings.minimum_level` uses values accepted directly by Logfire. Do not recreate a
+  `LogLevel` enum or a `to_logfire_level()` conversion. Pass exception objects through `_exc_info`
+  without manual exception-type metadata.
+
+## Settings, CLI, and lifespan
+
+- Split settings into logical Pydantic models for application, database, HTTP, pagination, and
+  Logfire configuration.
+- Keep one root `Settings(BaseSettings)` for environment loading; nested groups inherit the shared
+  `SettingsModel`. Logfire owns its minimum level, pagination owns its limits, and Gunicorn process
+  settings do not belong in application settings.
+- Load `Settings` only at the composition or CLI boundary. Do not instantiate settings at module
+  import, scatter environment reads, call `load_dotenv`, or render secrets.
+- Typer is a small operator layer only for `run`; it is not runtime
+  configuration storage.
+- Lifespan creates the engine and session factory, exposes minimal typed resources, and disposes
+  the engine after `yield`. It does not migrate, authenticate, query readiness, rebuild state, or
+  start unmanaged workers.
+
+## Health and deployment
+
+- Keep only parameterless `GET /`; it performs no database access.
+- Kubernetes liveness and readiness both use `/`.
+- Do not add a database readiness checker.
+- The logical service name is `virtualMoney`; Kubernetes/Helm identifiers use `virtualmoney`.
+- Docker uses Gunicorn with `uvicorn_worker.UvicornWorker`; Uvicorn is local-only.
+
+## Final architecture additions
+
+- Every maintained project-owned Python module uses `from __future__ import annotations`; Python
+  3.12+, 99 characters, English repository documentation, and canonical acronym spelling such as
+  `SQLAlchemy`, `API`, `HTTP`, and `UUID` are mandatory.
+- RPC methods use dotted camelCase paths, stable `<resource>_<operation_snake_case>` operation IDs,
+  one Request body for parameterized methods, and GET only for parameterless methods.
+- Handlers return multiline raw dictionaries in `ApplicationResponse[T]`. Do not add response
+  helpers or serialization-only `.model_validate()` calls.
+- Application packages are operation-oriented Command/Query + Handler modules. Shared services
+  require genuine reuse; giant DTO, model, service, registry, or dependency buckets are forbidden.
+- `DatabaseSession` uses function-scoped `Depends` and `session_factory.begin()`. Feature-local
+  providers compose handlers and all repositories in one request share that session.
+- Errors use semantic categories and focused feature files. API error handlers may instantiate
+  `JSONResponse` directly. SQLSTATE lists, exception-string parsing, `_json_response`, and
+  `del request` patterns are forbidden.
+- Authentication remains external. Typer exposes only `run`; production uses Gunicorn and
+  `uvicorn_worker.UvicornWorker`.
+- OpenAPI is the future SDK contract. Paths, operation IDs, Request/Result names, JSON fields,
+  requiredness, discriminators, and error meanings are stable. Follow `docs/api-standard.md`.
+- Do not add an abstraction unless it has an independent responsibility. Approved shared
+  abstractions include `ApplicationResponse[T]`, `ValueModel`, `ProjectionModel`,
+  `SQLAlchemyRepository`, `SQLAlchemyEntityRepository[T]`,
+  `SQLAlchemyScalarResultReader[T]`, and `SQLAlchemyProjectionResultReader[T]`.
+
+## Tests, CI, and completion discipline
+
+- Tests, fixtures, coverage, and CI/CD are not implemented in this repository stage. Do not add
+  or modify them unless the user explicitly requests it.
+- Preserve unrelated user changes and inspect the complete final diff.
+- Never invent test, coverage, migration, Docker, Helm, platform, or compatibility results.
+- Report failed or unavailable commands, assumptions, known limitations, checks not run, and
+  exact manual verification commands.
+
+## Absolute final typing and persistence rules
+
+- Use Python 3.12 PEP 695 generic syntax everywhere possible. `ApplicationResponse` is the sole
+  compatibility exception and uses `typing_extensions.TypeVar(default=None)` because native
+  generic defaults require Python 3.13.
+- Bare `ApplicationResponse` represents an empty result. `ApplicationResponse[None]` is forbidden.
+- Only `ORMSchema` enables `from_attributes=True`; `APIModel`, `RequestModel`, and `ResponseModel`
+  must not pretend to be ORM schemas.
+- `SQLAlchemyRepository` has no generic write methods; it owns the request session and typed
+  `_read_scalar`/`_read_projection` execution. `SQLAlchemyEntityRepository[T]` alone adds standard
+  UUID `get_by_id`. `SQLAlchemyScalarResultReader[T]` and
+  `SQLAlchemyProjectionResultReader[T]` expose only `one()`, `one_or_none()`, and `all()`.
+- Application code uses concrete constructor-injected `SQLAlchemy...Repository` classes for entity
+  persistence and `SQLAlchemy...Query` classes for read projections. Current database adapters have
+  no duplicate Protocol layer, and persistence never imports application.
+- Writes and reads remain separate. Repositories never commit, roll back, or implement Active Record.
+- Structured Commands, Queries, domain values, pagination values, internal results, and read
+  projections use immutable Pydantic v2 models. SQLAlchemy mappings and runtime resources do not.
+- Typer exposes only `virtualMoney run`; production starts Gunicorn directly.
+- Exception handlers pass exception objects to Logfire through `_exc_info`. Manual exception-type
+  attributes, SQLSTATE tables, exception-string parsing, and redundant runtime type checks are forbidden.
+- Public application errors use one logical error per file. SQLAlchemy Base, mixins, and one-model-per-file
+  ORM mappings live under `persistence/database` and use relative package facades.

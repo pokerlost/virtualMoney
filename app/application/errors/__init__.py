@@ -1,0 +1,128 @@
+"""Expected application errors grouped by semantic category and feature."""
+
+from __future__ import annotations
+
+from .accounts import (
+    AccountBalanceIntegrityError,
+    AccountBalanceMissing,
+    AccountBalanceOverflow,
+    AccountCreationConflict,
+    AccountNotFound,
+)
+from .assets import AssetNotFound
+from .base import (
+    ApplicationError,
+    ConflictError,
+    IntegrityError,
+    InvalidOperationError,
+    NotFoundError,
+)
+from .common import IdempotencyConflict
+from .financial_operations import (
+    FinancialOperationNotFound,
+    FinancialOperationNotRefundable,
+    RefundAlreadyCompleted,
+    RefundDataIntegrityError,
+    RefundWriteConflict,
+)
+from .history import HistoryCursorInvalid, HistoryPaginationInvalid
+from .holds import (
+    HoldAccountUnavailable,
+    HoldAlreadyCaptured,
+    HoldAlreadyReleased,
+    HoldAssetMismatch,
+    HoldCaptureDestinationInvalid,
+    HoldDataIntegrityError,
+    HoldNotFound,
+    HoldWriteConflict,
+    InsufficientAvailableBalance,
+    InvalidHoldState,
+)
+from .ledger import (
+    InvalidReversal,
+    LedgerAccountNotFound,
+    LedgerAccountUnavailable,
+    LedgerAssetMismatch,
+    LedgerAssetUnavailable,
+    LedgerDataIntegrityError,
+    LedgerTransactionAlreadyReversed,
+    LedgerTransactionNotFound,
+    LedgerWriteConflict,
+)
+from .rake import (
+    RakeAccountUnavailable,
+    RakeDataIntegrityError,
+    RakeEscrowNotFound,
+    RakeInsufficientEscrow,
+    RakeWriteConflict,
+)
+from .table_positions import (
+    BuyInHoldInvalid,
+    PositionAssetMismatch,
+    PositionOwnershipMismatch,
+    ReBuyHoldInvalid,
+    TableEscrowInsufficientBalance,
+    TableEscrowUnavailable,
+    TableMoneyDataIntegrityError,
+    TableMoneyWriteConflict,
+    TablePositionAlreadyOpen,
+    TablePositionClosed,
+    TablePositionNotFound,
+)
+
+__all__ = (
+    "AccountBalanceIntegrityError",
+    "AccountBalanceMissing",
+    "AccountBalanceOverflow",
+    "AccountCreationConflict",
+    "AccountNotFound",
+    "ApplicationError",
+    "AssetNotFound",
+    "BuyInHoldInvalid",
+    "ConflictError",
+    "FinancialOperationNotFound",
+    "FinancialOperationNotRefundable",
+    "HistoryCursorInvalid",
+    "HistoryPaginationInvalid",
+    "HoldAccountUnavailable",
+    "HoldAlreadyCaptured",
+    "HoldAlreadyReleased",
+    "HoldAssetMismatch",
+    "HoldCaptureDestinationInvalid",
+    "HoldDataIntegrityError",
+    "HoldNotFound",
+    "HoldWriteConflict",
+    "IdempotencyConflict",
+    "InsufficientAvailableBalance",
+    "IntegrityError",
+    "InvalidHoldState",
+    "InvalidOperationError",
+    "InvalidReversal",
+    "LedgerAccountNotFound",
+    "LedgerAccountUnavailable",
+    "LedgerAssetMismatch",
+    "LedgerAssetUnavailable",
+    "LedgerDataIntegrityError",
+    "LedgerTransactionAlreadyReversed",
+    "LedgerTransactionNotFound",
+    "LedgerWriteConflict",
+    "NotFoundError",
+    "PositionAssetMismatch",
+    "PositionOwnershipMismatch",
+    "RakeAccountUnavailable",
+    "RakeDataIntegrityError",
+    "RakeEscrowNotFound",
+    "RakeInsufficientEscrow",
+    "RakeWriteConflict",
+    "ReBuyHoldInvalid",
+    "RefundAlreadyCompleted",
+    "RefundDataIntegrityError",
+    "RefundWriteConflict",
+    "TableEscrowInsufficientBalance",
+    "TableEscrowUnavailable",
+    "TableMoneyDataIntegrityError",
+    "TableMoneyWriteConflict",
+    "TablePositionAlreadyOpen",
+    "TablePositionClosed",
+    "TablePositionNotFound",
+)

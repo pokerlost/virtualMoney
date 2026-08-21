@@ -1,0 +1,94 @@
+replicaCount: 2
+
+image:
+  repository: virtualmoney
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+application:
+  environment: production
+  openapiEnabled: true
+
+gunicorn:
+  workers: 2
+  timeoutSeconds: 30
+  gracefulTimeoutSeconds: 30
+  keepAliveSeconds: 5
+
+database:
+  existingSecret: ""
+  urlKey: DATABASE_URL
+  commandTimeoutSeconds: 5
+  poolTimeoutSeconds: 5
+  poolSize: 5
+  maxOverflow: 10
+
+pagination:
+  defaultLimit: 50
+  maximumLimit: 100
+
+logfire:
+  enabled: true
+  sendToLogfire: false
+  console: true
+  minimumLevel: info
+  existingSecret: ""
+  tokenKey: LOGFIRE_TOKEN
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+terminationGracePeriodSeconds: 30

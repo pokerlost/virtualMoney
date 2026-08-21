@@ -5,6 +5,8 @@ Revises: ${down_revision | comma,n}
 Create Date: ${create_date}
 """
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 
 from alembic import op
@@ -18,10 +20,10 @@ depends_on: str | Sequence[str] | None = ${repr(depends_on)}
 
 
 def upgrade() -> None:
-    """Применяет schema changes текущей revision."""
+    """Apply schema changes for the current revision."""
     ${upgrades if upgrades else "pass"}
 
 
 def downgrade() -> None:
-    """Откатывает schema changes текущей revision, если это безопасно."""
+    """Revert schema changes for the current revision when safe."""
     ${downgrades if downgrades else "pass"}
