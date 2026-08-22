@@ -26,6 +26,12 @@ router = APIRouter()
         "A CLOSED position is never reopened."
     ),
     operation_id="table_positions_re_buy",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["table_positions_re_buy"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

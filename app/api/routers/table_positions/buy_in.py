@@ -26,6 +26,12 @@ router = APIRouter()
         "one OPEN durable position atomically."
     ),
     operation_id="table_positions_buy_in",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["table_positions_buy_in"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

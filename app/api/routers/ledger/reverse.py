@@ -26,6 +26,12 @@ router = APIRouter()
         "unchanged, and partial reversal is unsupported."
     ),
     operation_id="ledger_reverse_transaction",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["ledger_reverse_transaction"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

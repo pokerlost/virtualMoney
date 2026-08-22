@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import Any
 
 API_DESCRIPTION = (
     "virtualMoney is the PostgreSQL-backed source of truth for internal poker assets, "
@@ -62,3 +63,11 @@ def build_openapi_tags() -> list[dict[str, str]]:
             "description": "Source-discriminated operation lookup and full compensation.",
         },
     ]
+
+
+def add_pokerlost_service_extension(
+    openapi_schema: dict[str, Any], service_id: str
+) -> dict[str, Any]:
+    """Attach canonical PokerLost service metadata to the generated OpenAPI schema."""
+    openapi_schema["x-pokerlost-service"] = {"id": service_id}
+    return openapi_schema

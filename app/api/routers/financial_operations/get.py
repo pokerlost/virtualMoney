@@ -25,6 +25,12 @@ router = APIRouter()
         "or ledger records without exposing internal fingerprints."
     ),
     operation_id="financial_operations_get_operation",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["financial_operations_get_operation"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

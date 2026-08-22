@@ -25,6 +25,12 @@ router = APIRouter()
         "minus held. All values use integer minimal units."
     ),
     operation_id="accounts_get_balance",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["accounts_get_balance"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

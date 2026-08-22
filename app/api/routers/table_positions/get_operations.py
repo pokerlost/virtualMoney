@@ -30,6 +30,12 @@ router = APIRouter()
         "This is not poker hand history."
     ),
     operation_id="table_positions_get_operations",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["table_positions_get_operations"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

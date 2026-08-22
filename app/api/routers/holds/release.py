@@ -26,6 +26,12 @@ router = APIRouter()
         "ledger posting. Partial release is unsupported."
     ),
     operation_id="holds_release_hold",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["holds_release_hold"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

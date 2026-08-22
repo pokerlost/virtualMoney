@@ -29,6 +29,12 @@ router = APIRouter()
         "amounts, business references, and explicit reversal links."
     ),
     operation_id="accounts_get_financial_history",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["accounts_get_financial_history"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

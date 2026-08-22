@@ -26,6 +26,12 @@ router = APIRouter()
         "close the position. A zero stack creates no zero-value journal."
     ),
     operation_id="table_positions_cash_out",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["table_positions_cash_out"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

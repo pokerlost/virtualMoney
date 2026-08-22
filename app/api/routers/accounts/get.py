@@ -23,6 +23,12 @@ router = APIRouter()
     summary="Get a financial account",
     description="Return account metadata without embedding its balance projection.",
     operation_id="accounts_get_account",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["accounts_get_account"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

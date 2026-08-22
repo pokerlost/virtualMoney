@@ -23,6 +23,12 @@ router = APIRouter()
     summary="Get an asset by code",
     description="Return internal asset metadata by its normalized canonical code.",
     operation_id="assets_get_asset_by_code",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["assets_get_asset_by_code"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

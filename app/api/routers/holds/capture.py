@@ -26,6 +26,12 @@ router = APIRouter()
         "Partial capture and caller-provided amounts are unsupported."
     ),
     operation_id="holds_capture_hold",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["holds_capture_hold"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

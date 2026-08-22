@@ -23,6 +23,12 @@ router = APIRouter()
     summary="Get a funds hold",
     description="Return the current full-only hold lifecycle state.",
     operation_id="holds_get_hold",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["holds_get_hold"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

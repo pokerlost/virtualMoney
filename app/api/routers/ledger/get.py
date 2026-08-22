@@ -23,6 +23,12 @@ router = APIRouter()
     summary="Get a ledger transaction",
     description="Return an immutable posted journal and its explicitly loaded entries.",
     operation_id="ledger_get_transaction",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["ledger_get_transaction"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

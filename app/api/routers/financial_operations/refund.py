@@ -28,6 +28,12 @@ router = APIRouter()
         "business lifecycle remain unchanged; partial refunds are unsupported."
     ),
     operation_id="financial_operations_refund_operation",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["financial_operations_refund_operation"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

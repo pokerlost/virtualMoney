@@ -26,6 +26,12 @@ router = APIRouter()
         "A stable accountId makes exact retries idempotent."
     ),
     operation_id="accounts_create_account",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["accounts_create_account"],
+    },
+    },
     responses={
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

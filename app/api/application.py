@@ -3,15 +3,46 @@
 from __future__ import annotations
 
 from importlib.metadata import version
+from typing import Any
 
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 
 from api.errors import configure_exception_handlers
 from api.lifespan import create_application_lifespan
-from api.openapi import API_DESCRIPTION, build_openapi_tags
+from api.openapi import (
+    API_DESCRIPTION,
+    add_pokerlost_service_extension,
+    build_openapi_tags,
+)
 from api.routes import configure_routers
 from configuration import Settings
 from observability import configure_observability, instrument_fastapi
+
+
+def configure_openapi(application: FastAPI, service_id: str) -> None:
+    """Attach canonical top-level virtualMoney metadata to generated OpenAPI schema."""
+
+    def openapi_with_service() -> dict[str, Any]:
+        if application.openapi_schema is None:
+            openapi_schema = get_openapi(
+                title=application.title,
+                summary=application.summary,
+                description=application.description,
+                version=application.version,
+                openapi_version=application.openapi_version,
+                openapi_tags=application.openapi_tags,
+                servers=application.servers,
+                terms_of_service=application.terms_of_service,
+                contact=application.contact,
+                license_info=application.license_info,
+                routes=application.routes,
+            )
+            add_pokerlost_service_extension(openapi_schema, service_id)
+            application.openapi_schema = openapi_schema
+        return application.openapi_schema
+
+    application.openapi = openapi_with_service
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -31,5 +62,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     configure_exception_handlers(app)
     configure_routers(app)
+    configure_openapi(app, application_settings.application.service_name)
     instrument_fastapi(app, application_settings)
     return app

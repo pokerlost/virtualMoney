@@ -25,6 +25,12 @@ router = APIRouter()
         "Return the durable OPEN or CLOSED financial lifecycle. This is not a live poker stack."
     ),
     operation_id="table_positions_get_position",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["table_positions_get_position"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},

@@ -26,6 +26,12 @@ router = APIRouter()
         "single system RAKE account for the asset."
     ),
     operation_id="rake_charge_rake",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["rake_charge_rake"],
+    },
+    },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

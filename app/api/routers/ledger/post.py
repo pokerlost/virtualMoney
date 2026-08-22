@@ -26,6 +26,12 @@ router = APIRouter()
         "the same PostgreSQL transaction."
     ),
     operation_id="ledger_post_transaction",
+    openapi_extra={
+        "x-pokerlost-authz": {
+            "actors": ["service"],
+            "permissions": ["ledger_post_transaction"],
+    },
+    },
     responses={
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApplicationResponse},
