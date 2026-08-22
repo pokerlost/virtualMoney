@@ -25,12 +25,13 @@ router = APIRouter()
         "Capture an ACTIVE hold in full, move its amount to pooled table escrow, and create "
         "one OPEN durable position atomically."
     ),
-    operation_id="table_positions_buy_in",
+    operation_id="virtualMoney.tablePositions.buyIn",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["table_positions_buy_in"],
-    },
+            "roles": [
+                "auto",
+            ],
+        }
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

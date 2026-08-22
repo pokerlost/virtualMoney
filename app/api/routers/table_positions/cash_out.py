@@ -25,12 +25,13 @@ router = APIRouter()
         "Return the authoritative final stack from pooled escrow to the USER account and "
         "close the position. A zero stack creates no zero-value journal."
     ),
-    operation_id="table_positions_cash_out",
+    operation_id="virtualMoney.tablePositions.cashOut",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["table_positions_cash_out"],
-    },
+            "roles": [
+                "auto",
+            ],
+        }
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

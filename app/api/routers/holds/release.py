@@ -25,12 +25,13 @@ router = APIRouter()
         "Transition one ACTIVE hold to RELEASED and decrease heldBalanceMinor without a "
         "ledger posting. Partial release is unsupported."
     ),
-    operation_id="holds_release_hold",
+    operation_id="virtualMoney.holds.releaseHold",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["holds_release_hold"],
-    },
+            "roles": [
+                "auto",
+            ],
+        }
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

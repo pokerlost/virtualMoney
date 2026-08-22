@@ -22,12 +22,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     summary="Get a funds hold",
     description="Return the current full-only hold lifecycle state.",
-    operation_id="holds_get_hold",
+    operation_id="virtualMoney.holds.getHold",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["holds_get_hold"],
-    },
+            "roles": [
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

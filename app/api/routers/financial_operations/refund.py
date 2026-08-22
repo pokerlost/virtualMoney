@@ -27,12 +27,14 @@ router = APIRouter()
         "Append a complete immutable REVERSAL and refund audit. The original journal and "
         "business lifecycle remain unchanged; partial refunds are unsupported."
     ),
-    operation_id="financial_operations_refund_operation",
+    operation_id="virtualMoney.financialOperations.refundOperation",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["financial_operations_refund_operation"],
-    },
+            "roles": [
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

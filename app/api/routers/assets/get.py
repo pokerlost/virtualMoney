@@ -22,12 +22,15 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     summary="Get an asset",
     description="Return internal financial asset metadata by its service-owned UUID.",
-    operation_id="assets_get_asset",
+    operation_id="virtualMoney.assets.getAsset",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["assets_get_asset"],
-    },
+            "roles": [
+                "user",
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

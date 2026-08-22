@@ -24,12 +24,15 @@ router = APIRouter()
     description=(
         "Return the durable OPEN or CLOSED financial lifecycle. This is not a live poker stack."
     ),
-    operation_id="table_positions_get_position",
+    operation_id="virtualMoney.tablePositions.getPosition",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["table_positions_get_position"],
-    },
+            "roles": [
+                "user",
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

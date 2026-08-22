@@ -28,12 +28,15 @@ router = APIRouter()
         "Return a descending keyset page of account-relative ledger transactions, signed "
         "amounts, business references, and explicit reversal links."
     ),
-    operation_id="accounts_get_financial_history",
+    operation_id="virtualMoney.accounts.getFinancialHistory",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["accounts_get_financial_history"],
-    },
+            "roles": [
+                "user",
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

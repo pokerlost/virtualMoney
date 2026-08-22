@@ -25,12 +25,14 @@ router = APIRouter()
         "Create account metadata and its zero balance projection in one transaction. "
         "A stable accountId makes exact retries idempotent."
     ),
-    operation_id="accounts_create_account",
+    operation_id="virtualMoney.accounts.createAccount",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["accounts_create_account"],
-    },
+            "roles": [
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

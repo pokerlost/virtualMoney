@@ -17,7 +17,7 @@ router = APIRouter(tags=[OpenAPITag.SERVICE])
     status_code=status.HTTP_200_OK,
     summary="Get service root",
     description="Return the minimal virtualMoney service availability response.",
-    operation_id="service_get_root",
+    operation_id="virtualMoney.root",
     openapi_extra={
         "x-pokerlost-authz": {
             "public": True,

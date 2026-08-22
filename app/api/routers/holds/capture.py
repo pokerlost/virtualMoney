@@ -25,12 +25,13 @@ router = APIRouter()
         "Transfer the authoritative held amount through one immutable HOLD_CAPTURE journal. "
         "Partial capture and caller-provided amounts are unsupported."
     ),
-    operation_id="holds_capture_hold",
+    operation_id="virtualMoney.holds.captureHold",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["holds_capture_hold"],
-    },
+            "roles": [
+                "auto",
+            ],
+        }
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

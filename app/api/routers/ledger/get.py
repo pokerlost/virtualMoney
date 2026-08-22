@@ -22,12 +22,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     summary="Get a ledger transaction",
     description="Return an immutable posted journal and its explicitly loaded entries.",
-    operation_id="ledger_get_transaction",
+    operation_id="virtualMoney.ledger.getTransaction",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["ledger_get_transaction"],
-    },
+            "roles": [
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

@@ -24,12 +24,15 @@ router = APIRouter()
         "Return posted and held projections plus availableBalanceMinor, derived as posted "
         "minus held. All values use integer minimal units."
     ),
-    operation_id="accounts_get_balance",
+    operation_id="virtualMoney.accounts.getBalance",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["accounts_get_balance"],
-    },
+            "roles": [
+                "user",
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

@@ -25,12 +25,14 @@ router = APIRouter()
         "Atomically post a balanced ADJUSTMENT and update materialized posted balances in "
         "the same PostgreSQL transaction."
     ),
-    operation_id="ledger_post_transaction",
+    operation_id="virtualMoney.ledger.postTransaction",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["ledger_post_transaction"],
-    },
+            "roles": [
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_409_CONFLICT: {"model": ApplicationResponse},

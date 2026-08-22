@@ -243,12 +243,32 @@ configuration/observability -> composition root
 
 ## Authentication boundary
 
-- `virtualMoney` contains no authentication or authorization implementation.
+- `virtualMoney` currently contains no authentication or authorization runtime implementation.
+- Future external `authService` owns token issuance and runtime role admission checks.
+- External `authService`-issued authorization contract is explicit per operation:
+  `public` endpoints or protected `roles` list.
+- Current `x-pokerlost-authz` values:
+  - `{"public": true}` for unauthenticated endpoints.
+  - `{"roles": [...]}` for authenticated endpoints.
+- Allowed runtime roles are independent capabilities:
+  - `user`
+  - `support`
+  - `master`
+  - `auto`
+- `public` is not a role and has no automatic inheritance.
+- No implicit role inheritance:
+  - `support` does **not** imply `user`
+  - `master` does **not** imply `support` or `user`
+  - `master` does **not** imply `auto`
+  - `auto` does **not** imply any human role
+- Every operation lists its complete allowed role set explicitly; never infer that set from
+  `virtualMoney` being a backend service.
+- The current route metadata is the explicit `virtualMoney` role matrix. A support-specific API
+  does not exist yet, so current operations do not allow the `support` role.
 - Do not add JWT/Bearer parsing, API keys, token scopes, auth middleware, local principals,
   hardcoded credentials, development tokens, or fake administrators.
-- A future external Auth Service owns token issuance and permissions. Until its contract exists,
-  document the boundary only; do not add dead ports, adapters, or models.
-- Current internal endpoints are unauthenticated and must not claim to provide access security.
+- `virtualMoney` keeps no local token verification or role assignment logic; that remains a
+  responsibility of `authService`.
 
 ## Observability
 
@@ -291,8 +311,9 @@ configuration/observability -> composition root
 - Every maintained project-owned Python module uses `from __future__ import annotations`; Python
   3.12+, 99 characters, English repository documentation, and canonical acronym spelling such as
   `SQLAlchemy`, `API`, `HTTP`, and `UUID` are mandatory.
-- RPC methods use dotted camelCase paths, stable `<resource>_<operation_snake_case>` operation IDs,
-  one Request body for parameterized methods, and GET only for parameterless methods.
+- RPC methods use dotted camelCase paths and stable operation IDs equal to
+  `virtualMoney.<RPC path without the leading slash>`; root uses `virtualMoney.root`. Use one
+  Request body for parameterized methods and GET only for parameterless methods.
 - Handlers return multiline raw dictionaries in `ApplicationResponse[T]`. Do not add response
   helpers or serialization-only `.model_validate()` calls.
 - Application packages are operation-oriented Command/Query + Handler modules. Shared services

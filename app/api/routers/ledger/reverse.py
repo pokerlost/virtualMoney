@@ -25,12 +25,14 @@ router = APIRouter()
         "Create one immutable REVERSAL with opposite entries. The original journal remains "
         "unchanged, and partial reversal is unsupported."
     ),
-    operation_id="ledger_reverse_transaction",
+    operation_id="virtualMoney.ledger.reverseTransaction",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["ledger_reverse_transaction"],
-    },
+            "roles": [
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

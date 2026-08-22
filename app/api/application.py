@@ -31,18 +31,18 @@ def configure_openapi(application: FastAPI, service_id: str) -> None:
                 description=application.description,
                 version=application.version,
                 openapi_version=application.openapi_version,
-                openapi_tags=application.openapi_tags,
                 servers=application.servers,
                 terms_of_service=application.terms_of_service,
                 contact=application.contact,
                 license_info=application.license_info,
                 routes=application.routes,
+                tags=application.openapi_tags,
             )
             add_pokerlost_service_extension(openapi_schema, service_id)
             application.openapi_schema = openapi_schema
         return application.openapi_schema
 
-    application.openapi = openapi_with_service
+    application.openapi = openapi_with_service  # type: ignore[method-assign]
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:

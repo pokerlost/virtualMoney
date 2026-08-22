@@ -29,12 +29,15 @@ router = APIRouter()
         "audits. "
         "This is not poker hand history."
     ),
-    operation_id="table_positions_get_operations",
+    operation_id="virtualMoney.tablePositions.getOperations",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["table_positions_get_operations"],
-    },
+            "roles": [
+                "user",
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

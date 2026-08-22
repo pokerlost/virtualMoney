@@ -25,12 +25,13 @@ router = APIRouter()
         "Transfer a positive rake amount calculated by Poker Server from table escrow to the "
         "single system RAKE account for the asset."
     ),
-    operation_id="rake_charge_rake",
+    operation_id="virtualMoney.rake.chargeRake",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["rake_charge_rake"],
-    },
+            "roles": [
+                "auto",
+            ],
+        }
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

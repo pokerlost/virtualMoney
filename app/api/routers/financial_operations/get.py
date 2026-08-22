@@ -24,12 +24,14 @@ router = APIRouter()
         "Return source-discriminated information from immutable hold, table, rake, refund, "
         "or ledger records without exposing internal fingerprints."
     ),
-    operation_id="financial_operations_get_operation",
+    operation_id="virtualMoney.financialOperations.getOperation",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["financial_operations_get_operation"],
-    },
+            "roles": [
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

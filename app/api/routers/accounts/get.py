@@ -22,12 +22,15 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     summary="Get a financial account",
     description="Return account metadata without embedding its balance projection.",
-    operation_id="accounts_get_account",
+    operation_id="virtualMoney.accounts.getAccount",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["accounts_get_account"],
-    },
+            "roles": [
+                "user",
+                "master",
+                "auto",
+            ],
+        },
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

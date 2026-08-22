@@ -25,12 +25,13 @@ router = APIRouter()
         "Create one ACTIVE full-only hold and increase heldBalanceMinor without posting a "
         "ledger transaction."
     ),
-    operation_id="holds_reserve_hold",
+    operation_id="virtualMoney.holds.reserveHold",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["holds_reserve_hold"],
-    },
+            "roles": [
+                "auto",
+            ],
+        }
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},

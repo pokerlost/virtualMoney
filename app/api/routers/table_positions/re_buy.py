@@ -25,12 +25,13 @@ router = APIRouter()
         "Capture a new ACTIVE hold into the position escrow and increase totalBuyInMinor. "
         "A CLOSED position is never reopened."
     ),
-    operation_id="table_positions_re_buy",
+    operation_id="virtualMoney.tablePositions.reBuy",
     openapi_extra={
         "x-pokerlost-authz": {
-            "actors": ["service"],
-            "permissions": ["table_positions_re_buy"],
-    },
+            "roles": [
+                "auto",
+            ],
+        }
     },
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApplicationResponse},
