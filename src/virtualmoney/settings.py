@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Literal
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_LOG_LEVEL_ALIASES = AliasChoices(
+    "VIRTUALMONEY_LOGLEVEL",
+    "VIRTUALMONEY_LOG_LEVEL",
+)
 
 
 class ServiceSettings(BaseSettings):
@@ -18,4 +24,7 @@ class ServiceSettings(BaseSettings):
         hide_input_in_errors=True,
     )
 
-    logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(
+        default="INFO",
+        validation_alias=_LOG_LEVEL_ALIASES,
+    )

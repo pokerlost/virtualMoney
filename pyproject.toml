@@ -12,25 +12,29 @@ dependencies = ["fastapi>=0.121,<1", "uvicorn>=0.38,<1", "pydantic-settings>=2.1
 
 
 [dependency-groups]
-dev = ["mypy>=2.3,<3", "pre-commit>=4.2,<5", "ruff>=0.16,<1"]
+dev = ["mypy>=2.3,<3", "pre-commit>=4.2,<5", "ruff>=0.16,<1", "pytest>=9,<10", "pytest-cov>=7,<8", "httpx>=0.28,<1"]
 
 [project.scripts]
-virtualMoney = "virtualMoney.cli:cli"
+virtualMoney = "virtualmoney.cli:cli"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/virtualMoney"]
+packages = ["src/virtualmoney"]
 
 [tool.ruff]
 target-version = "py314"
-line-length = 100
+line-length = 88
 
 [tool.ruff.lint]
-select = ["B", "E", "F", "I", "RUF", "UP"]
+select = ["B", "E", "F", "I", "N", "RUF", "UP"]
 
 [tool.mypy]
 python_version = "3.14"
 strict = true
-files = ["src/virtualMoney"]
+files = ["src/virtualmoney"]
 
 [tool.uv.sources]
 pypokerlost = { git = "ssh://git@github.com/pokerlost/pypokerlost.git", rev = "8652cc850ccef8a00538ba6ff0b545ff7f3d38af" }
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers --strict-config"
+markers = ["unit: isolated unit tests", "integration: external dependency tests", "contract: public contract tests"]

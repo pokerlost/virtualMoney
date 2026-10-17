@@ -14,7 +14,7 @@ class ApplicationResources:
     ready: bool = True
 
 
-def getResources(request: Request) -> ApplicationResources:
+async def get_resources(request: Request) -> ApplicationResources:
     """Expose initialized resources through one narrow dependency."""
     resources = getattr(request.app.state, "resources", None)
     if not isinstance(resources, ApplicationResources):

@@ -1,0 +1,61 @@
+"""Safe public HTTP errors without request values or exception details."""
+
+from __future__ import annotations
+
+import logging
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pypokerlost.types import PokerlostResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+LOGGER = logging.getLogger("virtualMoney")
+
+
+def error_response(status_code: int, code: str, message: str) -> JSONResponse:
+    """Map a reviewed error code to one public response shape."""
+    content = PokerlostResponse[None](
+        ok=False,
+        error=f"VIRTUALMONEY_{code}",
+        error_message=message,
+    ).model_dump(mode="json")
+    return JSONResponse(status_code=status_code, content=content)
+
+
+def configure_error_handlers(application: FastAPI) -> None:
+    """Register sanitized request, HTTP, and unexpected error responses."""
+
+    @application.exception_handler(RequestValidationError)
+    async def invalid_request(
+        request: Request, error: RequestValidationError
+    ) -> JSONResponse:
+        del request, error
+        return error_response(422, "VALIDATION_ERROR", "Request validation failed")
+
+    @application.exception_handler(StarletteHTTPException)
+    async def http_error(
+        request: Request, error: StarletteHTTPException
+    ) -> JSONResponse:
+        del request
+        status_code = error.status_code
+        if status_code == 404:
+            return error_response(status_code, "NOT_FOUND", "Resource not found")
+        if status_code == 405:
+            return error_response(
+                status_code, "METHOD_NOT_ALLOWED", "Method not allowed"
+            )
+        if status_code == 503:
+            return error_response(
+                status_code, "DEPENDENCY_UNAVAILABLE", "Required dependency unavailable"
+            )
+        return error_response(status_code, "HTTP_ERROR", "HTTP request failed")
+
+    @application.exception_handler(Exception)
+    async def unexpected_error(request: Request, error: Exception) -> JSONResponse:
+        LOGGER.error("Unhandled request error class=%s", type(error).__name__)
+        response = error_response(500, "INTERNAL_ERROR", "Internal server error")
+        request_id = getattr(request.state, "request_id", None)
+        if isinstance(request_id, str):
+            response.headers["X-Request-ID"] = request_id
+        return response
