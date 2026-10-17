@@ -110,13 +110,14 @@ jobs:
           uv run --locked mypy
           uv run --locked pytest -q
 
+
           uv build
           uv export --locked --no-dev --no-emit-project --output-file "$RUNNER_TEMP/runtimeRequirements.txt"
           uv venv "$RUNNER_TEMP/wheelCheck" --python 3.14
           uv pip install --python "$RUNNER_TEMP/wheelCheck/bin/python" --requirement "$RUNNER_TEMP/runtimeRequirements.txt"
           uv pip install --no-deps --python "$RUNNER_TEMP/wheelCheck/bin/python" dist/*.whl
           DOCKER_BUILDKIT=1 docker build --secret id=sdk_token,env=SDK_APP_TOKEN --tag virtualmoney:reviewed .
-          container="$(docker run --detach --rm --publish 127.0.0.1::8000 --env DATABASE_URL=postgresql+asyncpg://ci:ci@127.0.0.1:1/ci virtualmoney:reviewed)"
+          container="$(docker run --detach --rm --publish 127.0.0.1::8000 virtualmoney:reviewed)"
           port="$(docker port "$container" 8000/tcp | tail -n 1 | cut -d: -f2)"
           ready=false
           for attempt in $(seq 1 20); do
