@@ -1,104 +1,36 @@
-[project]
-name = "virtualMoney"
-version = "0.1.0"
-description = "PostgreSQL-backed source of truth for internal poker money"
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "alembic>=1.14.0,<2.0.0",
-    "asyncpg>=0.30.0,<1.0.0",
-    "fastapi>=0.121.0,<1.0.0",
-    "gunicorn>=23.0.0,<24.0.0",
-    "logfire[fastapi,sqlalchemy]>=4.38.0,<5.0.0",
-    "pydantic>=2.11.0,<3.0.0",
-    "pydantic-settings>=2.8.0,<3.0.0",
-    "sqlalchemy[asyncio]>=2.0.36,<3.0.0",
-    "typer>=0.16.0,<1.0.0",
-    "typing-extensions>=4.12.0,<5.0.0",
-    "uvicorn>=0.34.0,<1.0.0",
-    "uvicorn-worker>=0.3.0,<1.0.0",
-]
-
-[project.scripts]
-virtualMoney = "cli.application:cli"
-
-[dependency-groups]
-dev = [
-    "mypy>=1.15.0,<2.0.0",
-    "pre-commit>=4.2.0,<5.0.0",
-    "ruff>=0.12.0,<1.0.0",
-]
-
 [build-system]
-requires = ["hatchling>=1.27.0,<2.0.0"]
+requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
+[project]
+name = "virtualMoney"
+version = "0.2.0"
+description = "Pokerlost virtualMoney foundation"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = ["fastapi>=0.121,<1", "uvicorn>=0.38,<1", "pydantic-settings>=2.12,<3", "pypokerlost", "typer>=0.16,<1"]
+
+
+[dependency-groups]
+dev = ["mypy>=2.3,<3", "pre-commit>=4.2,<5", "ruff>=0.16,<1"]
+
+[project.scripts]
+virtualMoney = "virtualMoney.cli:cli"
+
 [tool.hatch.build.targets.wheel]
-packages = [
-    "app/api",
-    "app/application",
-    "app/cli",
-    "app/configuration",
-    "app/domain",
-    "app/observability",
-    "app/persistence",
-]
+packages = ["src/virtualMoney"]
 
 [tool.ruff]
-line-length = 99
-target-version = "py312"
-src = ["app"]
-extend-exclude = ["AGENTS.md"]
+target-version = "py314"
+line-length = 100
 
 [tool.ruff.lint]
-select = [
-    "ANN",
-    "ASYNC",
-    "B",
-    "C4",
-    "D",
-    "E",
-    "F",
-    "I",
-    "PIE",
-    "RUF",
-    "SIM",
-    "UP",
-]
-ignore = ["RUF002"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "pep257"
-
-[tool.ruff.lint.isort]
-known-first-party = [
-    "api",
-    "application",
-    "cli",
-    "configuration",
-    "domain",
-    "observability",
-    "persistence",
-]
-known-third-party = ["alembic"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "lf"
+select = ["B", "E", "F", "I", "RUF", "UP"]
 
 [tool.mypy]
-python_version = "3.12"
-plugins = ["pydantic.mypy"]
+python_version = "3.14"
 strict = true
-pretty = true
-show_error_codes = true
-warn_unreachable = true
-mypy_path = "app"
-files = ["app", "alembic/env.py"]
-exclude = ["alembic/versions"]
+files = ["src/virtualMoney"]
 
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = false
+[tool.uv.sources]
+pypokerlost = { git = "ssh://git@github.com/pokerlost/pypokerlost.git", rev = "8652cc850ccef8a00538ba6ff0b545ff7f3d38af" }
