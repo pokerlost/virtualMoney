@@ -4,7 +4,7 @@ A local Pokerlost financial service foundation. The active application exposes i
 
 ## 🚀 Run
 
-Python 3.14+ and read access to the pinned private `pypokerlost` source are needed to install. No database or external financial credential is used by this foundation.
+Python 3.14+ and local read access to the pinned private `pypokerlost` source are needed to install. The installed wheel includes the SDK as a runtime dependency and needs no adjacent checkout. No database or external financial credential is used by this foundation.
 
 ```bash
 uv sync --locked
@@ -23,4 +23,4 @@ uv run --locked mypy
 uv build
 ```
 
-The [foundation architecture](docs/architecture.md) comes from the pinned template; [SERVICE.md](SERVICE.md) owns business boundaries. No new subject tests or CI workflow are enabled. The confirmed source has no historical Alembic revision files. A Docker/Helm deployment target and database schema require a separate review; the old deployment preset is not part of this foundation.
+Technical CI checks source on PRs without secrets. A trusted push also attempts the pinned private SDK build; it reports a block until the repository-scoped GitHub App secrets are configured. No subject test suite is installed. The [foundation architecture](docs/architecture.md) comes from the pinned template; [SERVICE.md](SERVICE.md) owns business boundaries. The confirmed prior source has no Alembic revision files. A Docker/Helm deployment target and database schema require separate review; the old deployment preset is not part of this foundation.
