@@ -14,8 +14,11 @@ dist/
 .serena/
 .local/
 backups/
-.coverage*
+.coverage
+.coverage.*
 coverage/
 *.py[cod]
 .idea/
 .vscode/
+
+/core.[0-9]*
