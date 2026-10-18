@@ -1,0 +1,19 @@
+name: SDK candidate registration
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_sha:
+        description: Full reviewed candidate SHA; SDK admission remains separately required
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  registration-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Fail closed without claiming private SDK acceptance
+        run: |
+          echo 'This default-branch workflow only registers dispatch. Select the exact reviewed feature ref containing the SDK gate; no private build is executed here.'
+          exit 1
