@@ -1,17 +1,14 @@
-"""Verify the Pokerlost infrastructure and error envelope contracts."""
+"""Preserve the service's HTTP contract with actual TestClient lifespans."""
 
 from __future__ import annotations
 
-import asyncio
-
-from httpx import ASGITransport, AsyncClient
+from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
 from virtualmoney.app import create_app
 
 
 def test_service_http_contract(monkeypatch: MonkeyPatch) -> None:
-    """Public infrastructure keeps stable paths and operation IDs."""
     application = create_app()
 
     @application.get("/validate/{item_id}")
@@ -22,35 +19,32 @@ def test_service_http_contract(monkeypatch: MonkeyPatch) -> None:
     async def fail() -> None:
         raise RuntimeError("internal detail must stay private")
 
-    async def exercise() -> None:
-        async with application.router.lifespan_context(application):
-            transport = ASGITransport(app=application, raise_app_exceptions=False)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
-                root = await client.get("/")
-                assert root.status_code == 200 and root.json()["ok"] is True
-                document = (await client.get("/getOpenApi")).json()
-                assert document == application.openapi()
-                assert document["paths"]["/"]["get"]["operationId"] == "getRoot"
-                assert (
-                    document["paths"]["/getOpenApi"]["get"]["operationId"]
-                    == "getOpenApi"
-                )
-                assert "/health/live" not in document["paths"]
-                assert (await client.get("/health/live")).status_code == 200
-                missing = await client.get("/missing")
-                assert missing.status_code == 404
-                assert missing.json()["error"] == "VIRTUALMONEY_NOT_FOUND"
-                invalid = await client.get("/validate/not-an-int")
-                assert invalid.status_code == 422
-                assert invalid.json()["error"] == "VIRTUALMONEY_VALIDATION_ERROR"
-                failure = await client.get("/fail")
-                assert failure.status_code == 500
-                assert failure.json()["error"] == "VIRTUALMONEY_INTERNAL_ERROR"
-                assert "internal detail" not in failure.text
-                ready = await client.get("/health/ready")
-                assert ready.status_code == 200
-        assert not hasattr(application.state, "resources")
-
-    asyncio.run(exercise())
+    assert not hasattr(application.state, "resources")
+    with TestClient(application) as client:
+        assert hasattr(application.state, "resources")
+        root = client.get("/")
+        assert root.status_code == 200 and root.json()["ok"] is True
+        document = client.get("/getOpenApi")
+        assert document.status_code == 200
+        assert document.json() == application.openapi()
+        assert document.json()["paths"]["/"]["get"]["operationId"] == "getRoot"
+        assert (
+            document.json()["paths"]["/getOpenApi"]["get"]["operationId"]
+            == "getOpenApi"
+        )
+        assert "/health/live" not in document.json()["paths"]
+        assert client.get("/health/live").status_code == 200
+        missing = client.get("/missing")
+        assert missing.status_code == 404
+        assert missing.json()["error"] == "VIRTUALMONEY_NOT_FOUND"
+        invalid = client.get("/validate/not-an-int")
+        assert invalid.status_code == 422
+        assert invalid.json()["error"] == "VIRTUALMONEY_VALIDATION_ERROR"
+        assert client.get("/health/ready").status_code == 200
+    assert not hasattr(application.state, "resources")
+    with TestClient(application, raise_server_exceptions=False) as client:
+        failure = client.get("/fail")
+        assert failure.status_code == 500
+        assert failure.json()["error"] == "VIRTUALMONEY_INTERNAL_ERROR"
+        assert "internal detail" not in failure.text
+    assert not hasattr(application.state, "resources")

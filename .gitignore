@@ -4,12 +4,18 @@
 .pytest_cache/
 __pycache__/
 dist/
-*.py[cod]
 *.egg-info/
 .env
 .env.*
+!.env.example
+.aws
+.agents/
+.codex/
+.serena/
+.local/
+backups/
+.coverage*
+coverage/
+*.py[cod]
 .idea/
 .vscode/
-
-# Local launcher credentials are not project source.
-.aws
