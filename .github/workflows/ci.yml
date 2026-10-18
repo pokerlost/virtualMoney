@@ -164,7 +164,7 @@ jobs:
           container="$(docker run --detach --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --network host \
             virtualmoney:candidate)"
           ready=false
-          for attempt in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:8000/health/ready; then ready=true; break; fi
             sleep 1
           done
@@ -190,7 +190,7 @@ jobs:
           forward_pid=$!
           trap 'kill "$forward_pid" 2>/dev/null; kind delete cluster --name virtualmoney-ci' EXIT
           ready=false
-          for attempt in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:18080/health/ready; then ready=true; break; fi
             sleep 1
           done
