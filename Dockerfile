@@ -14,10 +14,10 @@ COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 COPY pyproject.toml uv.lock README.md .gitignore ./
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git make ca-certificates \
+    && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --chmod=0755 docker/sdk_askpass.sh /usr/local/bin/sdk_askpass
-RUN --mount=type=cache,id=uv-runtime,target=/root/.cache/uv,sharing=locked \
+RUN --mount=type=cache,id=virtualmoney-runtime-python314-linux-amd64,target=/root/.cache/uv,sharing=locked \
     --mount=type=secret,id=sdk_token,required=true \
     GIT_CONFIG_COUNT=1 \
     GIT_CONFIG_KEY_0=url.https://github.com/pokerlost/pypokerlost.git.insteadOf \
@@ -27,7 +27,7 @@ RUN --mount=type=cache,id=uv-runtime,target=/root/.cache/uv,sharing=locked \
     uv sync --locked --no-dev --no-install-project
 
 FROM dependencies AS wheel-builder
-RUN --mount=type=cache,id=uv-development,target=/root/.cache/uv,sharing=locked \
+RUN --mount=type=cache,id=virtualmoney-development-python314-linux-amd64,target=/root/.cache/uv,sharing=locked \
     --mount=type=secret,id=sdk_token,required=true \
     GIT_CONFIG_COUNT=1 \
     GIT_CONFIG_KEY_0=url.https://github.com/pokerlost/pypokerlost.git.insteadOf \
@@ -40,9 +40,13 @@ RUN --mount=type=cache,id=uv-build,target=/root/.cache/uv,sharing=locked \
     uv build --no-build-isolation --wheel --sdist --out-dir /dist
 
 FROM wheel-builder AS quality
+RUN apt-get update && apt-get install -y --no-install-recommends make git curl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN curl --fail --silent --show-error --location https://get.helm.sh/helm-v4.3.1-linux-amd64.tar.gz --output /tmp/helm.tar.gz \
+    && echo '0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b  /tmp/helm.tar.gz' | sha256sum --check --status \
+    && tar -xzf /tmp/helm.tar.gz -C /tmp linux-amd64/helm && mv /tmp/linux-amd64/helm /usr/local/bin/helm && rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
 RUN uv pip install --python /app/.venv/bin/python --no-deps /dist/*.whl
 COPY --chmod=u=rwX,go=rX . ./
-ENV CONTAINERIZED=1
+ENV CONTAINERIZED=1 UV_NO_SYNC=1
 CMD ["make", "check"]
 
 FROM scratch AS artifacts

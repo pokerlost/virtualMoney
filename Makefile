@@ -1,17 +1,25 @@
 ifneq ($(CONTAINERIZED),1)
-QUALITY_DOCKERFILE := Dockerfile
 QUALITY_IMAGE := virtualmoney:quality
-RUNTIME_IMAGE := virtualmoney:candidate
-QUALITY_EXTRA_TARGETS :=
+BUILD_DOCKERFILE := Dockerfile.quality
+QUALITY_RUN_ARGS += --env TEST_DATABASE_URL --env DATABASE_URL
+QUALITY_EXTRA_TARGETS := docs-check format-check chart-check
 
+QUALITY_DOCKERFILE := Dockerfile
+BUILD_DOCKERFILE := Dockerfile
 VERIFY_COMMAND = $(MAKE) CONTAINERIZED=1 test-image && $(QUALITY_RUN) python docker/coverage_report.py coverage/installed/coverage.json --after coverage/installed/.started --output coverage/installed/summary.md
 verify: quality-image
-include docker/quality-python.mk
+.PHONY: chart deploy-local undeploy-local
+chart deploy-local undeploy-local:
+	$(MAKE) CONTAINERIZED=1 $@
+
+
 SOURCE_REQUIRE_LOCK ?= true
 .PHONY: source
 source:
 	$(DOCKER) buildx build --file Dockerfile.source --build-arg REQUIRE_LOCK=$(SOURCE_REQUIRE_LOCK) --target source --load --tag virtualmoney:source $(QUALITY_BUILD_ARGS) .
 	$(DOCKER) run --init --rm --read-only --network none --tmpfs /tmp:rw,mode=1777 --user "$$(id -u):$$(id -g)" virtualmoney:source
+
+include docker/quality-python.mk
 else
 .DEFAULT_GOAL := help
 UV ?= uv
@@ -45,7 +53,7 @@ check: lint typecheck test ## Run the mandatory non-mutating checks.
 	$(UV) lock --check
 
 build: ## Export the wheel and sdist from the canonical container build.
-	docker buildx build $(DOCKER_BUILD_ARGS) --target artifacts --output type=local,dest=dist .
+	$(UV) build --no-build-isolation --wheel --sdist
 
 .PHONY: image
 image: ## Build and load the immutable runtime candidate locally.
@@ -75,6 +83,7 @@ KUBECONFIG_LOCAL ?= $(CURDIR)/.local/kubeconfig
 KIND_IMAGE := kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
 
 .PHONY: chart chart-check
+check: chart-check
 chart: ## Package the managed shared chart as a deployable artifact.
 	$(HELM) package deploy/chart --destination dist
 

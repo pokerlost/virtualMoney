@@ -82,6 +82,7 @@ jobs:
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
+          file: Dockerfile
           target: quality
           load: true
           tags: virtualmoney:quality
@@ -89,8 +90,9 @@ jobs:
           cache-from: type=gha,scope=${{ github.repository_id }}-sdk-quality-python314-linux-amd64-owner
           cache-to: type=gha,mode=max,scope=${{ github.repository_id }}-sdk-quality-python314-linux-amd64-owner
       - name: Fresh Docker lint, types and unit checks after cache restoration
-        env: {SDK_APP_TOKEN: '${{ steps.sdkToken.outputs.token }}'}
-        run: make check DOCKER_BUILD_ARGS='--secret id=sdk_token,env=SDK_APP_TOKEN'
+        env:
+          SDK_APP_TOKEN: ${{ steps.sdkToken.outputs.token }}
+        run: make check QUALITY_NETWORK=host DOCKER_BUILD_ARGS='--secret id=sdk_token,env=SDK_APP_TOKEN'
       - name: Build canonical wheel and sdist
         env: {SDK_APP_TOKEN: '${{ steps.sdkToken.outputs.token }}'}
         run: make build DOCKER_BUILD_ARGS='--secret id=sdk_token,env=SDK_APP_TOKEN'
@@ -98,6 +100,7 @@ jobs:
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
+          file: Dockerfile
           target: test
           platforms: linux/amd64
           load: true
@@ -112,6 +115,7 @@ jobs:
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
+          file: Dockerfile
           target: runtime
           platforms: linux/amd64
           load: true
