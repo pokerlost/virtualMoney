@@ -27,3 +27,4 @@ dist
 *.egg-info
 
 /core.[0-9]*
+.vscode/
