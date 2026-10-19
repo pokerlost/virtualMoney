@@ -1,0 +1,30 @@
+"""Verify the public Pokerlost envelope and actual OpenAPI publication."""
+
+from __future__ import annotations
+
+from fastapi.testclient import TestClient
+from pytest import MonkeyPatch
+
+from virtualmoney.app import create_app
+
+
+def test_public_root_and_unmodified_openapi(monkeypatch: MonkeyPatch) -> None:
+    application = create_app()
+    with TestClient(application) as client:
+        root = client.get("/")
+        assert root.status_code == 200
+        assert root.json() == {
+            "ok": True,
+            "result": None,
+            "error": None,
+            "error_message": None,
+            "retry_after": None,
+        }
+        document = client.get("/getOpenApi")
+        assert document.status_code == 200
+        assert document.json() == application.openapi()
+        assert document.json()["paths"]["/"]["get"]["operationId"] == "getRoot"
+        assert (
+            document.json()["paths"]["/getOpenApi"]["get"]["operationId"]
+            == "getOpenApi"
+        )
