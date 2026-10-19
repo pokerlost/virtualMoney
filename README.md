@@ -49,9 +49,7 @@ enabled disposable PostgreSQL profile, with separate `coverage/installed/` repor
 reads current source reports without rerunning tests. Below 100% warns; assertions, types,
 build/configuration/access and invalid/stale report errors fail.
 
-Private CI is separate owner-only manual dispatch: actor and triggering actor serrja, full SHA
-identical to the branch SHA and `SDK_BUILD_REVIEWED_SHA`, and the existing SDK-only App with
-Contents read solely on pypokerlost. This solo-writer policy is not a server reviewer gate;
-reassess before adding a writer. The owner activates the existing CI-only PR #2 and provisions
-App repository secrets. Ordinary source CI success does not verify B1; a skipped/failed private
-job fails manual acceptance. These commands do not merge, release or deploy to a remote cluster.
+Private SDK acceptance follows the [reviewed-source admission guide](.github/docs/sdk-admission.md).
+The trusted default-branch workflow uses a separately admitted full source SHA; integrated
+commits do not need an open PR. This is the approved solo-owner review model, not independent
+environment approval. Ordinary source checks do not establish runtime acceptance.
