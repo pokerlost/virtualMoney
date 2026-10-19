@@ -5,6 +5,7 @@ QUALITY_RUN_ARGS += --env TEST_DATABASE_URL --env DATABASE_URL
 QUALITY_EXTRA_TARGETS := docs-check format-check chart-check
 
 QUALITY_DOCKERFILE := Dockerfile
+RUNTIME_IMAGE := virtualmoney:candidate
 BUILD_DOCKERFILE := Dockerfile
 VERIFY_COMMAND = $(MAKE) CONTAINERIZED=1 test-image && $(QUALITY_RUN) python docker/coverage_report.py coverage/installed/coverage.json --after coverage/installed/.started --output coverage/installed/summary.md
 verify: quality-image
