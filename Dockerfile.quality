@@ -72,7 +72,6 @@ STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
     CMD ["python", "-c", "import urllib.request; urllib.request.build_opener(urllib.request.ProxyHandler({})).open('http://127.0.0.1:8000/health/live', timeout=2).close()"]
 CMD ["python", "-m", "uvicorn", "virtualmoney.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-server-header", "--timeout-graceful-shutdown", "10"]
-
 FROM test AS installed-test
 ENV COVERAGE_FILE=/app/coverage/installed/.coverage
 CMD ["python", "-m", "pytest", "--cov", "--cov-report=term-missing", "--cov-report=json:/app/coverage/installed/coverage.json", "--cov-report=xml:/app/coverage/installed/coverage.xml", "-p", "no:cacheprovider", "--basetemp=/tmp/tests"]
