@@ -5,22 +5,25 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pypokerlost.types import PokerlostResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 LOGGER = logging.getLogger("virtualMoney")
 
 
-def error_response(status_code: int, code: str, message: str) -> JSONResponse:
+def error_response(
+    status_code: int, code: str, message: str, headers: dict[str, str] | None = None
+) -> JSONResponse:
     """Map a reviewed error code to one public response shape."""
     content = PokerlostResponse[None](
         ok=False,
         error=f"VIRTUALMONEY_{code}",
         error_message=message,
     ).model_dump(mode="json")
-    return JSONResponse(status_code=status_code, content=content)
+    return JSONResponse(status_code=status_code, content=content, headers=headers)
 
 
 def configure_error_handlers(application: FastAPI) -> None:
@@ -34,22 +37,37 @@ def configure_error_handlers(application: FastAPI) -> None:
         return error_response(422, "VALIDATION_ERROR", "Request validation failed")
 
     @application.exception_handler(StarletteHTTPException)
-    async def http_error(
-        request: Request, error: StarletteHTTPException
-    ) -> JSONResponse:
-        del request
+    async def http_error(request: Request, error: StarletteHTTPException) -> Response:
+        # Preserve reviewed protocol metadata, never arbitrary exception headers
+        # or a stale Content-Length for the replacement envelope.
+        headers = {
+            name: value
+            for name, value in (error.headers or {}).items()
+            if name.lower() in {"allow", "www-authenticate", "retry-after"}
+        }
+        native = await http_exception_handler(
+            request,
+            StarletteHTTPException(error.status_code, detail="", headers=headers),
+        )
+        if not native.body:
+            return native
         status_code = error.status_code
         if status_code == 404:
-            return error_response(status_code, "NOT_FOUND", "Resource not found")
+            return error_response(
+                status_code, "NOT_FOUND", "Resource not found", headers
+            )
         if status_code == 405:
             return error_response(
-                status_code, "METHOD_NOT_ALLOWED", "Method not allowed"
+                status_code, "METHOD_NOT_ALLOWED", "Method not allowed", headers
             )
         if status_code == 503:
             return error_response(
-                status_code, "DEPENDENCY_UNAVAILABLE", "Required dependency unavailable"
+                status_code,
+                "DEPENDENCY_UNAVAILABLE",
+                "Required dependency unavailable",
+                headers,
             )
-        return error_response(status_code, "HTTP_ERROR", "HTTP request failed")
+        return error_response(status_code, "HTTP_ERROR", "HTTP request failed", headers)
 
     @application.exception_handler(Exception)
     async def unexpected_error(request: Request, error: Exception) -> JSONResponse:
