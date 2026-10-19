@@ -14,7 +14,7 @@ COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 COPY pyproject.toml uv.lock README.md .gitignore ./
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates \
+    && apt-get install -y --no-install-recommends git make ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --chmod=0755 docker/sdk_askpass.sh /usr/local/bin/sdk_askpass
 RUN --mount=type=cache,id=uv-runtime,target=/root/.cache/uv,sharing=locked \
@@ -38,6 +38,12 @@ RUN --mount=type=cache,id=uv-development,target=/root/.cache/uv,sharing=locked \
 COPY src ./src
 RUN --mount=type=cache,id=uv-build,target=/root/.cache/uv,sharing=locked \
     uv build --no-build-isolation --wheel --sdist --out-dir /dist
+
+FROM wheel-builder AS quality
+RUN uv pip install --python /app/.venv/bin/python --no-deps /dist/*.whl
+COPY --chmod=u=rwX,go=rX . ./
+ENV CONTAINERIZED=1
+CMD ["make", "check"]
 
 FROM scratch AS artifacts
 COPY --from=wheel-builder /dist/ /

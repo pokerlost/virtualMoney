@@ -1,3 +1,18 @@
+ifneq ($(CONTAINERIZED),1)
+QUALITY_DOCKERFILE := Dockerfile
+QUALITY_IMAGE := virtualmoney:quality
+RUNTIME_IMAGE := virtualmoney:candidate
+QUALITY_EXTRA_TARGETS :=
+
+VERIFY_COMMAND = $(MAKE) CONTAINERIZED=1 test-image && $(QUALITY_RUN) python docker/coverage_report.py coverage/installed/coverage.json --after coverage/installed/.started --output coverage/installed/summary.md
+verify: quality-image
+include docker/quality-python.mk
+SOURCE_REQUIRE_LOCK ?= true
+.PHONY: source
+source:
+	$(DOCKER) buildx build --file Dockerfile.source --build-arg REQUIRE_LOCK=$(SOURCE_REQUIRE_LOCK) --target source --load --tag virtualmoney:source $(QUALITY_BUILD_ARGS) .
+	$(DOCKER) run --init --rm --read-only --network none --tmpfs /tmp:rw,mode=1777 --user "$$(id -u):$$(id -g)" virtualmoney:source
+else
 .DEFAULT_GOAL := help
 UV ?= uv
 
@@ -48,9 +63,10 @@ run: ## Run the application on loopback without rebuilding.
 
 .PHONY: test-image
 test-image: ## Run installed-wheel tests in a disposable container and, when enabled, PostgreSQL.
-	@mkdir -p coverage
+	@mkdir -p coverage/installed
 	docker buildx build $(DOCKER_BUILD_ARGS) --target test --load --tag virtualmoney:test .
-	docker run --rm --read-only --network none --tmpfs /tmp:rw,noexec,nosuid,size=64m --user "$$(id -u):$$(id -g)" --mount type=bind,source="$$(pwd)/coverage",target=/checks/coverage virtualmoney:test
+	@touch coverage/installed/.started
+	docker run --rm --read-only --network none --tmpfs /tmp:rw,noexec,nosuid,size=64m --user "$$(id -u):$$(id -g)" --mount type=bind,source="$$(pwd)/coverage/installed",target=/checks/coverage virtualmoney:test
 
 HELM ?= helm
 KIND ?= kind
@@ -79,3 +95,5 @@ undeploy-local: ## Delete only this application's disposable Kind cluster.
 
 # Project-owned commands survive Copier updates without copying shared recipes.
 -include Makefile.local
+
+endif
