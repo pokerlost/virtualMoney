@@ -11,9 +11,11 @@ uv sync --locked
 uv run --locked virtualMoney run --host 127.0.0.1 --port 8000
 ```
 
-The existing `virtualMoney run` command starts the same application factory as `uvicorn virtualmoney.app:create_app --factory`. The only registered paths are `GET /`, `GET /getOpenApi`, `/health/live`, and `/health/ready`. The former dotted financial API is [historical reference](docs/history/README.md), not a current route or SDK guarantee.
+The existing `virtualMoney run` command starts the same application factory as `uvicorn virtualmoney.app:create_app --factory`. Its infrastructure paths are `GET /`, `GET /getOpenApi`, `/health/live`, `/health/ready`, and the internal `/metrics` scrape endpoint. The former dotted financial API is [historical reference](docs/history/README.md), not a current route or SDK guarantee.
 
 ## 🛠 Development
+
+Read the [contribution guide](CONTRIBUTING.md) for review scope, update ownership and checks.
 
 ```bash
 uv lock --check
