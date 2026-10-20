@@ -8,6 +8,8 @@ version = "0.2.1.dev0"
 description = "Pokerlost virtualMoney foundation"
 readme = "README.md"
 requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSES/*", "THIRD_PARTY_NOTICES.md", "LICENSE"]
 dependencies = ["fastapi==0.143.3", "uvicorn>=0.38,<1", "pydantic-settings>=2.12,<3", "pypokerlost", "prometheus-fastapi-instrumentator==8.1.0", "prometheus-client==0.26.0", "typer>=0.16,<1", "pydantic>=2.12,<3"]
 
 [project.scripts]

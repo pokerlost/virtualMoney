@@ -15,7 +15,10 @@ WORKDIR /app
 FROM base AS dependencies
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
-COPY pyproject.toml uv.lock README.md .gitignore ./
+COPY pyproject.toml uv.lock README.md .gitignore THIRD_PARTY_NOTICES.md ./
+COPY LICENSES ./LICENSES
+COPY LICENSE ./
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -62,9 +65,16 @@ CMD ["python", "-m", "pytest", "--cov", "--cov-report=term-missing", "--cov-repo
 
 FROM base AS runtime
 COPY --from=installed /app/.venv /app/.venv
+COPY --chmod=u=rwX,go=rX --from=dependencies /app/LICENSES /licenses/scaffold
+COPY --chmod=0444 --from=dependencies /app/THIRD_PARTY_NOTICES.md /licenses/THIRD_PARTY_NOTICES.md
+COPY --chmod=0444 --from=dependencies /app/LICENSE /licenses/LICENSE
+LABEL org.opencontainers.image.licenses="MIT"
+COPY --chmod=u=rw,go=r app_logging.json ./app_logging.json
+ARG SOURCE_COMMIT
+LABEL org.opencontainers.image.revision=$SOURCE_COMMIT
 USER 65532:65532
 EXPOSE 8000
 STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
     CMD ["python", "-c", "import urllib.request; urllib.request.build_opener(urllib.request.ProxyHandler({})).open('http://127.0.0.1:8000/health/live', timeout=2).close()"]
-CMD ["python", "-m", "uvicorn", "virtualmoney.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-server-header", "--no-access-log", "--timeout-graceful-shutdown", "10"]
+CMD ["python", "-m", "uvicorn", "virtualmoney.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-server-header", "--no-access-log", "--log-config", "/app/app_logging.json", "--workers", "1", "--timeout-graceful-shutdown", "10"]

@@ -1,7 +1,11 @@
-# virtualMoney foundation
+# virtualMoney
 
-Use English repository documentation and concise docstrings. Read `SERVICE.md`, `PROJECT.md`, and `docs/architecture.md` before product changes. This checkout contains only the specialized Pokerlost infrastructure foundation. Its prior financial code and detailed design remain at Git commit `9b165a7968a78747385628851ec0fcea24554d17` and in the private migration backup; `docs/history/` labels old contracts as historical. Do not re-register old dotted routes, assume they match the current SDK, or introduce fake financial success, verifier, wallet, deposit, withdrawal, provider, or live DB migration.
+Read selected [baseRules](https://raw.githubusercontent.com/serrja/baseRules/730418d3cc480b4f05b88b4c8275296c4845a75a/docs/engineering.md),
+then [Pokerlost norms](https://raw.githubusercontent.com/pokerlost/projectRules/4785546cffa58f7ae1c22b6d6b8846a0141793eb/docs/project.md),
+then the full [local contracts](LOCAL_CONTRACTS.md), `PROJECT.md` and `SERVICE.md`.
+The local override preserves this foundation's exact auth/scope boundaries,
+project-owned settings and applied migrations. Typed SDK service identity selects
+a fixed gateway backend; it never grants authorization. No planned product operation is active.
 
-`virtualMoney` owns future internal ledger and escrow; `cryptoService` owns only proposed external observations; `pokerService` owns game state. Preserve the canonical Pokerlost request/response and exact authorization boundary. Keep `PROJECT.md`, `SERVICE.md`, code, scopes, settings, and migrations project-owned. Owned Python follows PEP 8 snake_case, CapWords classes, and UPPER_SNAKE_CASE constants while preserving published external names.
-
-Technical HTTP and CLI regression tests cover the active foundation. CI source checks run on PRs without secrets; a private SDK build requires the approved solo-owner/full-SHA admission policy. Preserve unrelated files, review the complete diff, and do not deploy or access live databases by implication from this foundation.
+Links are pinned reading sources, not automatic loaders or grants. Review the source
+diff, update full-SHA links explicitly and run docs checks to refresh rules.

@@ -1,0 +1,7 @@
+# virtualMoney foundation
+
+Use English repository documentation and concise docstrings. Read `SERVICE.md`, `PROJECT.md`, and `docs/architecture.md` before product changes. This checkout contains only the specialized Pokerlost infrastructure foundation. Its prior financial code and detailed design remain at Git commit `9b165a7968a78747385628851ec0fcea24554d17` and in the private migration backup; `docs/history/` labels old contracts as historical. Do not re-register old dotted routes, assume they match the current SDK, or introduce fake financial success, verifier, wallet, deposit, withdrawal, provider, or live DB migration.
+
+`virtualMoney` owns future internal ledger and escrow; `cryptoService` owns only proposed external observations; `pokerService` owns game state. Preserve the canonical Pokerlost request/response and exact authorization boundary. Keep `PROJECT.md`, `SERVICE.md`, code, scopes, settings, and migrations project-owned. Owned Python follows PEP 8 snake_case, CapWords classes, and UPPER_SNAKE_CASE constants while preserving published external names.
+
+Technical HTTP and CLI regression tests cover the active foundation. CI source checks run on PRs without secrets; a private SDK build requires the approved solo-owner/full-SHA admission policy. Preserve unrelated files, review the complete diff, and do not deploy or access live databases by implication from this foundation.
