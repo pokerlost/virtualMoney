@@ -8,7 +8,9 @@ version = "0.2.1.dev0"
 description = "Pokerlost virtualMoney foundation"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = ["fastapi>=0.121,<1", "uvicorn>=0.38,<1", "pydantic-settings>=2.12,<3", "pypokerlost", "typer>=0.16,<1", "pydantic>=2.12,<3"]
+license = "MIT"
+license-files = ["LICENSES/*", "THIRD_PARTY_NOTICES.md", "LICENSE"]
+dependencies = ["fastapi==0.143.3", "uvicorn>=0.38,<1", "pydantic-settings>=2.12,<3", "pypokerlost", "prometheus-fastapi-instrumentator==8.1.0", "prometheus-client==0.26.0", "typer>=0.16,<1", "pydantic>=2.12,<3"]
 
 [project.scripts]
 virtualMoney = "virtualmoney.cli:cli"
@@ -64,4 +66,4 @@ output = "coverage/coverage.xml"
 
 
 [tool.uv.sources]
-pypokerlost = { git = "ssh://git@github.com/pokerlost/pypokerlost.git", rev = "8652cc850ccef8a00538ba6ff0b545ff7f3d38af" }
+pypokerlost = { git = "ssh://git@github.com/pokerlost/pypokerlost.git", rev = "c4d8327e8318eab6769b3f05c4a7d848c75afb0b" }

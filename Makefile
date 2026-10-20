@@ -1,8 +1,13 @@
 ifneq ($(CONTAINERIZED),1)
 QUALITY_IMAGE := virtualmoney:quality
+# Generated check owns its complete graph; opt into extras only when defined.
+QUALITY_EXTRA_TARGETS :=
 BUILD_DOCKERFILE := Dockerfile.quality
 QUALITY_RUN_ARGS += --env TEST_DATABASE_URL --env DATABASE_URL
-QUALITY_EXTRA_TARGETS := docs-check format-check chart-check
+.PHONY: run
+run:
+	$(MAKE) CONTAINERIZED=1 run
+QUALITY_EXTRA_TARGETS := chart-check
 
 QUALITY_DOCKERFILE := Dockerfile
 RUNTIME_IMAGE := virtualmoney:candidate
@@ -68,7 +73,7 @@ HTTP_PORT ?= 8000
 UVICORN_FLAGS ?=
 
 run: ## Run the application on loopback without rebuilding.
-	$(UV) run --locked uvicorn virtualmoney.app:create_app --factory --host "$(HTTP_HOST)" --port "$(HTTP_PORT)" $(UVICORN_FLAGS)
+	$(UV) run --locked uvicorn virtualmoney.app:create_app --factory --host "$(HTTP_HOST)" --port "$(HTTP_PORT)" --no-server-header --no-access-log --log-config app_logging.json --workers 1 $(UVICORN_FLAGS)
 
 .PHONY: test-image
 test-image: ## Run installed-wheel tests in a disposable container and, when enabled, PostgreSQL.

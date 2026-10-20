@@ -1,0 +1,122 @@
+"""Test actual scrape/log data and independent app registries."""
+
+from __future__ import annotations
+
+import json
+import logging
+import logging.config
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+from prometheus_client.parser import text_string_to_metric_families
+
+from virtualmoney.app import create_app
+from virtualmoney.observability import ObservabilitySettings, RequestFormatter
+from virtualmoney.settings import ServiceSettings
+
+
+@pytest.fixture(autouse=True)
+def isolated_database(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "DATABASE_URL", "postgresql+asyncpg://test:test@127.0.0.1:1/test"
+    )
+
+
+def test_request_metrics_logs_and_repeated_factory(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    settings = ServiceSettings()
+    applications = [create_app(settings), create_app(settings)]
+    assert (
+        applications[0].state.metrics_registry
+        is not applications[1].state.metrics_registry
+    )
+    for app in applications:
+        with TestClient(app) as client:
+            reply = client.get(
+                "/health/live", headers={"X-Request-ID": "telemetry-probe"}
+            )
+            assert reply.headers["X-Request-ID"] == "telemetry-probe"
+            scrape = client.get("/metrics")
+            assert scrape.status_code == 200
+            samples = [
+                sample
+                for family in text_string_to_metric_families(scrape.text)
+                for sample in family.samples
+            ]
+            counter = [
+                sample
+                for sample in samples
+                if sample.name == "http_requests_total"
+                and sample.labels.get("handler") == "/health/live"
+            ]
+            assert len(counter) == 1 and counter[0].value == 1
+            assert set(counter[0].labels) == {"handler", "status"}
+            assert "request_id" not in counter[0].labels
+            assert any(
+                sample.name == "process_resident_memory_bytes" for sample in samples
+            )
+            assert any(
+                sample.name == "http_request_duration_seconds_count"
+                for sample in samples
+            )
+    messages = [json.loads(line) for line in capsys.readouterr().err.splitlines()]
+    correlated = [
+        value for value in messages if value["request_id"] == "telemetry-probe"
+    ]
+    assert len(correlated) == 2
+    assert all(
+        value["status"] == 200 and value["service_id"] == "virtualMoney"
+        for value in correlated
+    )
+
+
+def test_metrics_opt_out_needs_no_credentials() -> None:
+    settings = ServiceSettings()
+    with TestClient(
+        create_app(settings, telemetry=ObservabilitySettings(metrics_enabled=False))
+    ) as client:
+        assert client.get("/metrics").status_code == 404
+
+
+def test_duplicate_request_ids_are_replaced() -> None:
+    settings = ServiceSettings()
+    with TestClient(create_app(settings)) as client:
+        reply = client.get(
+            "/health/live",
+            headers=[("X-Request-ID", "first"), ("X-Request-ID", "second")],
+        )
+        assert reply.headers["X-Request-ID"] not in {"first", "second", "first, second"}
+
+
+def test_exception_formatter_and_native_server_log_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("VIRTUALMONEY_ENVIRONMENT", "ci")
+    try:
+        raise RuntimeError("synthetic-private-error-sentinel")
+    except RuntimeError:
+        import sys
+
+        record = logging.LogRecord(
+            "uvicorn.error",
+            logging.ERROR,
+            __file__,
+            1,
+            "private message %s",
+            ("private-token",),
+            sys.exc_info(),
+        )
+    output = RequestFormatter().format(record)
+    value = json.loads(output)
+    assert value["exception_class"] == "RuntimeError"
+    assert value["environment"] == "ci"
+    assert "synthetic-private-error-sentinel" not in output
+    assert "private message" not in output and "private-token" not in output
+    config = json.loads(Path("app_logging.json").read_text())
+    # Exercise the stdlib resolver without changing pytest's process loggers.
+    formatter = logging.config.DictConfigurator(config).configure_formatter(
+        config["formatters"]["safe"]
+    )
+    assert json.loads(formatter.format(record))["exception_class"] == "RuntimeError"

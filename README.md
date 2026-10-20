@@ -53,3 +53,13 @@ Private SDK acceptance follows the [reviewed-source admission guide](.github/doc
 The trusted default-branch workflow uses a separately admitted full source SHA; integrated
 commits do not need an open PR. This is the approved solo-owner review model, not independent
 environment approval. Ordinary source checks do not establish runtime acceptance.
+## Observability and license
+
+`GET /metrics` is an internal scrape endpoint, excluded from public gateway routes.
+The factory owns a separate registry with bounded route/method/status metrics and
+process CPU/RSS. `make run` and the runtime image use `app_logging.json`: JSON logs
+carry validated request correlation and safe exception classes, without raw query,
+bodies, credentials or traceback text. Run one worker per container; scale replicas.
+
+Project code uses [MIT](LICENSE). Preserve the scaffold notice and upstream terms
+in [third-party notices](THIRD_PARTY_NOTICES.md).
