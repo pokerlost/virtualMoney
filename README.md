@@ -11,9 +11,11 @@ uv sync --locked
 uv run --locked virtualMoney run --host 127.0.0.1 --port 8000
 ```
 
-The existing `virtualMoney run` command starts the same application factory as `uvicorn virtualmoney.app:create_app --factory`. The only registered paths are `GET /`, `GET /getOpenApi`, `/health/live`, and `/health/ready`. The former dotted financial API is [historical reference](docs/history/README.md), not a current route or SDK guarantee.
+The existing `virtualMoney run` command starts the same application factory as `uvicorn virtualmoney.app:create_app --factory`. Its infrastructure paths are `GET /`, `GET /getOpenApi`, `/health/live`, `/health/ready`, and the internal `/metrics` scrape endpoint. The former dotted financial API is [historical reference](docs/history/README.md), not a current route or SDK guarantee.
 
 ## 🛠 Development
+
+Read the [contribution guide](CONTRIBUTING.md) for review scope, update ownership and checks.
 
 ```bash
 uv lock --check
@@ -39,6 +41,13 @@ requires an approved destination and tested image manifest digest. Private runti
 a full reviewed SHA and the SDK-only App approval gate; skipped runtime checks do not pass.
 
 ## Docker verification
+
+`make ci-local` runs source checks, installed-package acceptance and artifact
+validation. `make version` reports application/chart versions; `make release-check`
+validates built outputs. New wheel, sdist and chart files share
+`dist/<source-content-sha256>/`, preserving prior rollback artifacts. After a
+successful online run, `make ci-local OFFLINE=1` requires the same prepared
+source, installed image and optional database images, then executes fresh tests.
 
 `make source` parses the required frozen lock, checks formatting/lint and compiles source using
 public Docker tools without installing the SDK. It does not verify runtime types or tests.

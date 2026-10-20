@@ -16,7 +16,7 @@ dependencies = ["fastapi==0.143.3", "uvicorn>=0.38,<1", "pydantic-settings>=2.12
 virtualMoney = "virtualmoney.cli:cli"
 
 [dependency-groups]
-dev = ["mypy>=2.3,<3", "ruff==0.16.4", "packaging>=25,<27", "hatchling>=1.27,<2", "pytest>=9,<10", "pytest-cov>=7,<8", "httpx>=0.28,<1", "pre-commit>=4.2,<5"]
+dev = ["PyYAML>=6,<7", "mypy>=2.3,<3", "ruff==0.16.4", "packaging>=25,<27", "hatchling>=1.27,<2", "pytest>=9,<10", "pytest-cov>=7,<8", "httpx>=0.28,<1", "pre-commit>=4.2,<5"]
 
 [tool.hatch.build]
 exclude = [".aws", ".aws/**", ".agents", ".agents/**", ".codex", ".codex/**", ".serena", ".serena/**", ".local", ".local/**", "backups", "backups/**", ".env", ".env.*", "!.env.example", "/core.[0-9]*", "/.coverage", "/.coverage.*", ".vscode", ".vscode/**"]
