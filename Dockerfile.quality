@@ -7,6 +7,7 @@ COPY docker/sdk-source.empty /sdk-source.empty
 FROM ghcr.io/astral-sh/uv:0.12.15@sha256:62f8c047d0a0e9ece6b53fc63df902585a67a47a7f318ddec4a37db586edc8e3 AS uv
 
 FROM ${PYTHON_IMAGE} AS base
+ARG TARGETPLATFORM
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -26,16 +27,16 @@ COPY --chmod=0755 docker/sdk_askpass.sh /usr/local/bin/sdk_askpass
 COPY --chmod=0755 docker/sdk_sync.sh /usr/local/bin/sdk_sync
 COPY --from=sdk-source / /opt/sdk-source/
 ARG SDK_SOURCE_MODE=remote
-RUN --mount=type=cache,id=virtualmoney-runtime-python314-linux-amd64,target=/root/.cache/uv,sharing=locked \
+RUN --mount=type=cache,id=virtualmoney-runtime-python314-${TARGETPLATFORM},target=/root/.cache/uv,sharing=locked \
     --mount=type=secret,id=sdk_token \
     sdk_sync --no-dev
 
 FROM dependencies AS wheel-builder
-RUN --mount=type=cache,id=virtualmoney-development-python314-linux-amd64,target=/root/.cache/uv,sharing=locked \
+RUN --mount=type=cache,id=virtualmoney-development-python314-${TARGETPLATFORM},target=/root/.cache/uv,sharing=locked \
     --mount=type=secret,id=sdk_token \
     sdk_sync --all-groups
 COPY src ./src
-RUN --mount=type=cache,id=uv-build,target=/root/.cache/uv,sharing=locked \
+RUN --mount=type=cache,id=virtualmoney-build-${TARGETPLATFORM},target=/root/.cache/uv,sharing=locked \
     uv build --no-build-isolation --wheel --sdist --out-dir /dist
 
 FROM wheel-builder AS quality

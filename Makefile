@@ -4,10 +4,17 @@ QUALITY_IMAGE := virtualmoney:quality
 QUALITY_EXTRA_TARGETS :=
 BUILD_DOCKERFILE := Dockerfile.quality
 QUALITY_RUN_ARGS += --env TEST_DATABASE_URL --env DATABASE_URL
+
 .PHONY: run
 run:
 	$(MAKE) CONTAINERIZED=1 run
 QUALITY_EXTRA_TARGETS := chart-check
+CI_LOCAL_TARGETS := check coverage build verify chart release-check
+VERSION_COMMAND = $(QUALITY_RUN) python -m docker.chart_release version
+RELEASE_CHECK_COMMAND = $(QUALITY_RUN) python -m docker.chart_release release-check
+.PHONY: chart
+chart: quality-image
+	$(QUALITY_RUN) make chart
 
 QUALITY_DOCKERFILE := Dockerfile
 RUNTIME_IMAGE := virtualmoney:candidate
@@ -15,7 +22,7 @@ BUILD_DOCKERFILE := Dockerfile
 VERIFY_COMMAND = $(MAKE) CONTAINERIZED=1 test-image && $(QUALITY_RUN) python docker/coverage_report.py coverage/installed/coverage.json --after coverage/installed/.started --output coverage/installed/summary.md
 verify: quality-image
 .PHONY: chart deploy-local undeploy-local
-chart deploy-local undeploy-local:
+deploy-local undeploy-local:
 	$(MAKE) CONTAINERIZED=1 $@
 
 
@@ -50,7 +57,7 @@ typecheck: ## Check strict Python types.
 	$(UV) run --locked mypy
 
 test-unit: ## Run isolated tests and complete Python coverage.
-	$(UV) run --locked pytest --cov --cov-report=term-missing --cov-report=json --cov-report=xml
+	$(UV) run --locked pytest --junitxml=coverage/junit.xml --cov --cov-report=term-missing --cov-report=json --cov-report=xml
 
 test: test-unit ## Run every test required by this project's capabilities.
 
@@ -64,7 +71,7 @@ build: ## Export the wheel and sdist from the canonical container build.
 .PHONY: image
 image: ## Build and load the immutable runtime candidate locally.
 	@mkdir -p dist
-	docker buildx build $(DOCKER_BUILD_ARGS) --target runtime --load --tag virtualmoney:candidate --metadata-file dist/image-build.json .
+	docker buildx build $(DOCKER_BUILD_ARGS) $(LOCAL_BUILD_NETWORK) --target runtime --load --tag virtualmoney:candidate --metadata-file dist/image-build.json .
 
 .PHONY: run
 
@@ -78,7 +85,7 @@ run: ## Run the application on loopback without rebuilding.
 .PHONY: test-image
 test-image: ## Run installed-wheel tests in a disposable container and, when enabled, PostgreSQL.
 	@mkdir -p coverage/installed
-	docker buildx build $(DOCKER_BUILD_ARGS) --target test --load --tag virtualmoney:test .
+	docker buildx build $(DOCKER_BUILD_ARGS) $(LOCAL_BUILD_NETWORK) --target test --load --tag virtualmoney:test .
 	@touch coverage/installed/.started
 	docker run --rm --read-only --network none --tmpfs /tmp:rw,noexec,nosuid,size=64m --user "$$(id -u):$$(id -g)" --mount type=bind,source="$$(pwd)/coverage/installed",target=/checks/coverage virtualmoney:test
 
@@ -91,7 +98,8 @@ KIND_IMAGE := kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a2659
 .PHONY: chart chart-check
 check: chart-check
 chart: ## Package the managed shared chart as a deployable artifact.
-	$(HELM) package deploy/chart --destination dist
+	$(HELM) package deploy/chart --destination dist/charts --app-version "$$($(UV) run --locked python -m docker.chart_release app-version)"
+	$(UV) run --locked python -m docker.chart_release capture
 
 chart-check: ## Check chart templates and schema with explicit validation-only values.
 	$(HELM) lint deploy/chart --strict --set image.repository=validation.invalid/application --set image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

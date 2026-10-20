@@ -921,6 +921,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pyyaml" },
     { name = "ruff" },
 ]
 
@@ -945,5 +946,6 @@ dev = [
     { name = "pre-commit", specifier = ">=4.2,<5" },
     { name = "pytest", specifier = ">=9,<10" },
     { name = "pytest-cov", specifier = ">=7,<8" },
+    { name = "pyyaml", specifier = ">=6,<7" },
     { name = "ruff", specifier = "==0.16.4" },
 ]
