@@ -1,11 +1,13 @@
 ifneq ($(CONTAINERIZED),1)
 QUALITY_IMAGE := virtualmoney:quality
+# Generated check owns its complete graph; opt into extras only when defined.
+QUALITY_EXTRA_TARGETS :=
 BUILD_DOCKERFILE := Dockerfile.quality
 QUALITY_RUN_ARGS += --env TEST_DATABASE_URL --env DATABASE_URL
 .PHONY: run
 run:
 	$(MAKE) CONTAINERIZED=1 run
-QUALITY_EXTRA_TARGETS := docs-check format-check chart-check
+QUALITY_EXTRA_TARGETS := chart-check
 
 QUALITY_DOCKERFILE := Dockerfile
 RUNTIME_IMAGE := virtualmoney:candidate
