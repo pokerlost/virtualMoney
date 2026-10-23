@@ -1,5 +1,10 @@
 # Development
 
+Daily policy: use `dev`, run `make lint`, inspect the staged diff, then explicitly
+`git push origin dev`. `main` and `test` are preserved. Test, typecheck, build,
+coverage and full acceptance commands below are manual. New manual Actions in
+`dev` may require a later authorized default-branch activation.
+
 Run `uv lock` once for a fresh project, then `make install` and `make ci-local`.
 The Docker path uses the project's locked native tools without a neighboring
 template checkout. `make check` runs quality and source tests; `make coverage`
