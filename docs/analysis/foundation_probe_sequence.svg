@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1040" viewBox="0 0 1280 1040" role="img" aria-labelledby="title description">
+  <title id="title">virtualMoney foundation readiness and interface discovery</title>
+  <desc id="description">AS-IS sequence for local lifespan, health probes, the canonical public root, and the unmodified OpenAPI document. No database or financial operations.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="context-stroke" />
+    </marker>
+  </defs>
+  <rect width="1280" height="1040" fill="#f7f9fc" />
+  <text x="40" y="45" font-family="DejaVu Sans, sans-serif" font-size="27" fill="#172b4d" text-anchor="start" font-weight="700">Foundation readiness and interface discovery</text>
+  <text x="40" y="76" font-family="DejaVu Sans, sans-serif" font-size="15" fill="#475569" text-anchor="start" font-weight="400">AS-IS · virtualMoney · local process profile · no financial operations or database</text>
+  <rect x="40" y="112" width="220" height="48" rx="8" fill="#e7eefb" stroke="#9ab2da" />
+  <text x="150" y="142" font-family="DejaVu Sans, sans-serif" font-size="15" fill="#172b4d" text-anchor="middle" font-weight="600">Local runner / operator</text>
+  <line x1="150" y1="160" x2="150" y2="906" stroke="#aab8ca" stroke-width="1.5" stroke-dasharray="5 5" />
+  <rect x="350" y="112" width="220" height="48" rx="8" fill="#e7eefb" stroke="#9ab2da" />
+  <text x="460" y="142" font-family="DejaVu Sans, sans-serif" font-size="15" fill="#172b4d" text-anchor="middle" font-weight="600">FastAPI application</text>
+  <line x1="460" y1="160" x2="460" y2="906" stroke="#aab8ca" stroke-width="1.5" stroke-dasharray="5 5" />
+  <rect x="680" y="112" width="220" height="48" rx="8" fill="#e7eefb" stroke="#9ab2da" />
+  <text x="790" y="142" font-family="DejaVu Sans, sans-serif" font-size="15" fill="#172b4d" text-anchor="middle" font-weight="600">Lifespan resources</text>
+  <line x1="790" y1="160" x2="790" y2="906" stroke="#aab8ca" stroke-width="1.5" stroke-dasharray="5 5" />
+  <rect x="1000" y="112" width="220" height="48" rx="8" fill="#e7eefb" stroke="#9ab2da" />
+  <text x="1110" y="142" font-family="DejaVu Sans, sans-serif" font-size="15" fill="#172b4d" text-anchor="middle" font-weight="600">OpenAPI generator</text>
+  <line x1="1110" y1="160" x2="1110" y2="906" stroke="#aab8ca" stroke-width="1.5" stroke-dasharray="5 5" />
+  <rect x="451" y="196" width="18" height="696" fill="#d9e6ff" stroke="#98b4e8" />
+  <rect x="781" y="236" width="18" height="656" fill="#def0ea" stroke="#9bc6b8" />
+  <rect x="1101" y="690" width="18" height="62" fill="#ede5fb" stroke="#bfabd9" />
+  <line x1="150" y1="207" x2="451" y2="207" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="300.5" y="198" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">Start process / enter lifespan</text>
+  <line x1="469" y1="248" x2="781" y2="248" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="625.0" y="239" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">ApplicationResources(ready=True)</text>
+  <line x1="150" y1="304" x2="451" y2="304" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="300.5" y="295" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">GET /health/live</text>
+  <line x1="451" y1="342" x2="150" y2="342" stroke="#526579" stroke-width="1.7" marker-end="url(#arrow)" stroke-dasharray="6 4" />
+  <text x="300.5" y="333" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#526579" text-anchor="middle" font-weight="400">200 {"status": "alive"}</text>
+  <line x1="150" y1="395" x2="451" y2="395" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="300.5" y="386" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">GET /health/ready</text>
+  <line x1="469" y1="435" x2="781" y2="435" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="625.0" y="426" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">get_resources(): ready</text>
+  <line x1="781" y1="473" x2="469" y2="473" stroke="#526579" stroke-width="1.7" marker-end="url(#arrow)" stroke-dasharray="6 4" />
+  <text x="625.0" y="464" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#526579" text-anchor="middle" font-weight="400">True</text>
+  <line x1="451" y1="511" x2="150" y2="511" stroke="#526579" stroke-width="1.7" marker-end="url(#arrow)" stroke-dasharray="6 4" />
+  <text x="300.5" y="502" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#526579" text-anchor="middle" font-weight="400">200 {"status": "ready"}</text>
+  <line x1="150" y1="567" x2="451" y2="567" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="300.5" y="558" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">GET /  [getRoot]</text>
+  <line x1="451" y1="607" x2="150" y2="607" stroke="#526579" stroke-width="1.7" marker-end="url(#arrow)" stroke-dasharray="6 4" />
+  <text x="300.5" y="598" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#526579" text-anchor="middle" font-weight="400">200 PokerlostResponse[None]</text>
+  <line x1="150" y1="660" x2="451" y2="660" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="300.5" y="651" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">GET /getOpenApi  [getOpenApi]</text>
+  <line x1="469" y1="701" x2="1101" y2="701" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="785.0" y="692" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">application.openapi()</text>
+  <line x1="1101" y1="742" x2="469" y2="742" stroke="#526579" stroke-width="1.7" marker-end="url(#arrow)" stroke-dasharray="6 4" />
+  <text x="785.0" y="733" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#526579" text-anchor="middle" font-weight="400">OpenAPI 3.1 document</text>
+  <line x1="451" y1="783" x2="150" y2="783" stroke="#526579" stroke-width="1.7" marker-end="url(#arrow)" stroke-dasharray="6 4" />
+  <text x="300.5" y="774" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#526579" text-anchor="middle" font-weight="400">200 unmodified document</text>
+  <line x1="150" y1="841" x2="451" y2="841" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="300.5" y="832" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">Stop process / exit lifespan</text>
+  <line x1="469" y1="882" x2="781" y2="882" stroke="#1d4ed8" stroke-width="1.7" marker-end="url(#arrow)" />
+  <text x="625.0" y="873" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#1d4ed8" text-anchor="middle" font-weight="400">Remove application.state.resources</text>
+  <rect x="40" y="932" width="1200" height="78" rx="8" fill="#ffffff" stroke="#ccd6e3" />
+  <text x="59" y="957" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#172b4d" text-anchor="start" font-weight="400">Collection: only GET / and GET /getOpenApi, the two operations actually present in OpenAPI.</text>
+  <text x="59" y="981" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#526579" text-anchor="start" font-weight="400">Health probes are source-derived and excluded from the schema. /metrics remains an internal scrape endpoint.</text>
+</svg>
