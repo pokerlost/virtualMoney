@@ -4,7 +4,7 @@ A local Pokerlost financial service foundation. The active application exposes i
 
 ## 🚀 Run
 
-Python 3.14+ and local read access to the pinned private `pypokerlost` source are needed to install. The installed wheel includes the SDK as a runtime dependency and needs no adjacent checkout. No database or external financial credential is used by this foundation.
+Python 3.14+ and local read access to the pinned `pypokerlost` source are needed to install. The installed wheel includes the SDK as a runtime dependency and needs no adjacent checkout. No database or external financial credential is used by this foundation.
 
 ```bash
 uv sync --locked
