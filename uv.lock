@@ -899,7 +899,7 @@ wheels = [
 
 [[package]]
 name = "virtualmoney"
-version = "0.2.1.dev0"
+version = "0.2.1.dev1"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
