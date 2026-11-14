@@ -1,5 +1,7 @@
 # Future Auth Service Interaction
 
+This historical design is retained for reference. The active foundation contract is documented in [SERVICE.md](../../SERVICE.md).
+
 > Historical design from `9b165a7968a78747385628851ec0fcea24554d17`. The current
 > foundation has no protected business route or configured verifier. Its current authorization
 > boundary is described in [SERVICE.md](../../SERVICE.md) and the pinned `serviceTemplate` source.

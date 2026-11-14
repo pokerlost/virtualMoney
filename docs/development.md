@@ -1,5 +1,7 @@
 # Development
 
+See [runtime environments](environments.md) for independent runtime and telemetry inputs.
+
 Run `uv lock` once for a fresh project, then `make install` and `make ci-local`.
 The Docker path uses the project's locked native tools without a neighboring
 template checkout. `make check` runs quality and source tests; `make coverage`
