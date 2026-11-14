@@ -1,5 +1,7 @@
 # Platform RPC API Standard
 
+This historical design is retained for reference. The active foundation contract is documented in [SERVICE.md](../../SERVICE.md).
+
 > Historical design from `9b165a7968a78747385628851ec0fcea24554d17`. None of these
 > financial operations is registered by the current foundation. The dotted RPC paths and
 > `ApplicationResponse` envelope require a separate compatibility decision before reuse.
