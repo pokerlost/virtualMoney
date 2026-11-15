@@ -1,0 +1,72 @@
+{
+  "info": {
+    "name": "virtualMoney foundation probe (AS-IS)",
+    "schema": "https://schema.postman.com/collection/json/v2.1.0/draft-07/collection.json",
+    "description": "Two documented infrastructure GET operations only. Source: pokerlost/virtualMoney 27a19412870866da937465f14ab77ba8541223c2. OpenAPI SHA-256: 39b6d9a414df674f1e4cec672fd61d0ee52a93dcd81a08053a1e3a00ae0f8563. Health probes are excluded from OpenAPI and are documented separately in foundation_probe.md. No financial operation or authentication token is configured."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "string",
+      "description": "An explicitly selected local foundation process. No production address is supplied."
+    }
+  ],
+  "item": [
+    {
+      "name": "getRoot",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/",
+        "description": "Derived from GET / / getRoot in foundation_openapi.json. No request body or access token."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Canonical public root envelope\", function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json()).to.deep.equal({",
+              "    ok: true, result: null, error: null, error_message: null, retry_after: null",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "getOpenApi",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/getOpenApi",
+        "description": "Derived from GET /getOpenApi / getOpenApi in foundation_openapi.json. No request body or access token."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Current infrastructure OpenAPI document\", function () {",
+              "  pm.response.to.have.status(200);",
+              "  const document = pm.response.json();",
+              "  pm.expect(document.openapi).to.eql(\"3.1.0\");",
+              "  pm.expect(Object.keys(document.paths).sort()).to.eql([\"/\", \"/getOpenApi\"].sort());",
+              "  pm.expect(document.paths[\"/\"].get.operationId).to.eql(\"getRoot\");",
+              "  pm.expect(document.paths[\"/getOpenApi\"].get.operationId).to.eql(\"getOpenApi\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

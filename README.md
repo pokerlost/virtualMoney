@@ -4,7 +4,7 @@ A local Pokerlost financial service foundation. The active application exposes i
 
 ## 🚀 Run
 
-Python 3.14+ and local read access to the pinned private `pypokerlost` source are needed to install. The installed wheel includes the SDK as a runtime dependency and needs no adjacent checkout. No database or external financial credential is used by this foundation.
+Python 3.14+ and local read access to the pinned `pypokerlost` source are needed to install. The installed wheel includes the SDK as a runtime dependency and needs no adjacent checkout. No database or external financial credential is used by this foundation.
 
 ```bash
 uv sync --locked
@@ -25,7 +25,7 @@ uv run --locked mypy
 uv build
 ```
 
-Technical CI checks source on PRs without secrets. The pinned private SDK build is manually gated by reviewed SHA and the approved solo-owner/full-SHA admission policy. Run `uv run --locked pytest -q` for HTTP and CLI regression coverage. The [foundation architecture](docs/architecture.md) comes from the pinned template; [SERVICE.md](SERVICE.md) owns business boundaries. The confirmed prior source has no Alembic revision files. The Dockerfile builds this backend with a BuildKit SDK token secret; the managed Helm chart is available, and persistence remains disabled.
+Technical CI checks source on PRs without secrets. The pinned private SDK build is manually gated by reviewed SHA and the approved solo-owner/full-SHA admission policy. Run `uv run --locked pytest -q` for HTTP and CLI regression coverage. The [foundation architecture](docs/architecture.md) comes from the pinned template; [SERVICE.md](SERVICE.md) owns business boundaries. The [AS-IS foundation probe](docs/analysis/foundation_probe.md) traces readiness and interface discovery to existing tests. The confirmed prior source has no Alembic revision files. The Dockerfile builds this backend with a BuildKit SDK token secret; the managed Helm chart is available, and persistence remains disabled.
 
 ## Tested foundation commands
 

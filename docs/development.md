@@ -1,9 +1,6 @@
 # Development
 
-Daily policy: use `dev`, run `make lint`, inspect the staged diff, then explicitly
-`git push origin dev`. `main` and `test` are preserved. Test, typecheck, build,
-coverage and full acceptance commands below are manual. New manual Actions in
-`dev` may require a later authorized default-branch activation.
+See [runtime environments](environments.md) for independent runtime and telemetry inputs.
 
 Run `uv lock` once for a fresh project, then `make install` and `make ci-local`.
 The Docker path uses the project's locked native tools without a neighboring
@@ -13,8 +10,31 @@ reports those results without rerunning them. `make build` creates distributions
 and source-bound artifact evidence. Installed acceptance and source tests are
 different scenarios.
 
+The managed package test compares the installed native distribution version with
+`pyproject.toml` using `packaging.version.Version`. `TEST_INSTALLED_WHEEL=1` checks
+an import from site-packages and rejects editable origin metadata when present;
+it keeps the existing Docker contract without requiring artifact-path variables.
+For exact artifact acceptance, additionally set `TEST_EXACT_WHEEL=1`,
+`EXPECTED_WHEEL_PATH` to the actual wheel file and `EXPECTED_WHEEL_SHA256` to its
+lowercase SHA-256. The strict mode requires that file's hash, package/version,
+noneditable PEP 610 file URL and the active environment's installed import to
+agree. Declared optional PEP 610 SHA-256 hashes must match; uv may omit them.
+Strict mode rejects malformed or unsupported declared archive hashes.
+Run this acceptance outside the source checkout without import-path overrides.
+An allocated release uses the staged build's versioned pyproject in its isolated
+acceptance fixture; it does not rewrite the original source metadata or compare
+an application/OpenAPI version field.
+The portable `docker/python_release.py` retains its canonical Python 3.12 Ruff
+target through a per-file setting; project-owned code keeps the project's target.
+
 Ignored `coverage/` contains source SHA/dirty/content identity, commands, statuses,
 tool versions, coverage/JUnit and artifact checksums. Coverage below 100% warns;
 failed or unavailable mandatory checks do not become PASS. `OFFLINE=1` requires
 prepared exact tool, dependency and acceptance inputs; the default blocks unknown
 runtime inputs. See [versions](versioning.md) and [releases](releases.md).
+
+CI checks pull requests into `test`, `dev` and `main` and every push to those
+branches, including documentation changes. Push runs keep distinct concurrency
+groups so a later push cannot cancel an earlier event's checks. Only superseded
+pull-request checks are canceled. Contributions follow working branch → `test` →
+`dev` → `main`; new working branches use one lowerCamelCase identifier.

@@ -1,21 +1,20 @@
 # Runtime environments
 
-`main`, `dev`, `test` and `local` identify a process, not a Git branch or service ID.
-The explicit `ServiceSettings(environment=...)` argument overrides the corresponding
-prefixed environment variable. The safe default is `local`; `.env.example` is not
-automatically loaded. No HOME, Git or remote endpoint is read on import.
+`ServiceSettings.environment` accepts `main`, `dev`, `test`, or `local` (the default).
+Set `VIRTUALMONEY_RUNTIME_ENVIRONMENT` or pass `environment=...` explicitly.
+Constructor values take priority over process variables, then an explicitly selected
+dotenv file or secret directory. No dotenv file is loaded automatically.
 
-Select a separate database, credentials and deployment namespace for each remote
-environment. `DATABASE_URL` remains explicit and secret-redacted; setting the
-identity alone does not provision, migrate or isolate an existing database.
-Existing local volumes and paths are preserved. Remote endpoints are not configured
-by this repository. Container callers need an explicit approved routing arrangement;
-the SDK's local origin means loopback in the caller's network namespace.
+`ObservabilitySettings.environment` retains its separate execution contour:
+`VIRTUALMONEY_ENVIRONMENT` accepts `local`, `dev`, `ci`, or `remote`, defaulting to `local`.
+The inputs do not map into each other; a test deployment may run in the CI contour.
+Existing log-level aliases and constructor overrides remain available.
 
-The SDK's new explicit environment client factory is available in its development
-source. This service keeps its existing exact SDK dependency until a separately
-reviewed dependency update; no automatic dependency upgrade or fallback to main.
+These labels do not configure endpoints, databases, credentials, caches or namespaces.
+This financial service remains an empty foundation without persistence, providers,
+financial operations or an outbound SDK client. Setting an environment never provisions,
+migrates or isolates resources. Owners must configure any future separation explicitly.
 
-Development: `git switch dev`, `make lint`, review diff and `git push origin dev`.
-Full tests, builds, database integration and promotion remain manual. This source
-change has lint-only verification, not runtime or deployment acceptance.
+The exact existing SDK dependency remains pinned; this change does not enable a new
+SDK factory or change HTTP paths, JSON, scopes or authorization. Follow the normal
+working-branch to test, dev and main review flow with the full native checks.
